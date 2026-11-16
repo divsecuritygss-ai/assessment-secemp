@@ -1315,8 +1315,8 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
     }
 
     function renderRegionalAssessmentSpokes(dataset) {
-      var items = dataset || assessments;
-      if (!items || items.length === 0 || !map) return;
+      if (!map) return;
+      var items = dataset || assessments || [];
 
       var currentZoom = map.getZoom();
       if (currentZoom <= 8 && activeWilayahScope === 'ALL') {
@@ -1324,6 +1324,15 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
       }
 
       var groupedByRegion = {};
+      var isSuperAdmin = currentUser && currentUser.role === 'SUPER ADMIN';
+
+      // Pastikan wilayah aktif selalu memiliki grup agar titik pusat tetap muncul walau data masih 0
+      if (!isSuperAdmin && currentUser && currentUser.wilayahKerja) {
+        groupedByRegion[currentUser.wilayahKerja] = [];
+      } else if (activeWilayahScope && activeWilayahScope !== 'ALL') {
+        groupedByRegion[activeWilayahScope] = [];
+      }
+
       items.forEach(function(item) {
         var wCode = String(getProp(item, 'WilayahKerja', 'wilayahKerja') || 'ITA').trim();
         if (!groupedByRegion[wCode]) groupedByRegion[wCode] = [];
