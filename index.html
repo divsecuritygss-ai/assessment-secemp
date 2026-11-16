@@ -1266,14 +1266,14 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
               '<div class="radar-pulse ' + dotBg + ' opacity-60"></div>' +
               '<div class="w-4 h-4 rounded-full ' + dotBg + ' border-2 border-white shadow-lg group-hover:scale-125 transition"></div>' +
             '</div>' +
-            '<div class="mt-0.5 px-2 py-0.5 rounded-md bg-obsidian-950/95 border ' + badgeBorder + ' shadow-lg text-[10px] font-mono font-bold text-white whitespace-nowrap flex items-center space-x-1">' +
+            '<div class="opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 pointer-events-none mt-1 px-2.5 py-0.5 rounded-md bg-obsidian-950/95 border ' + badgeBorder + ' shadow-xl text-[10px] font-mono font-bold text-white whitespace-nowrap flex items-center space-x-1 z-50">' +
               '<span>' + escapeHtml(code) + '</span>' +
               '<span class="text-cyan-300">(' + st.total + ')</span>' +
             '</div>' +
           '</div>';
 
           var nodeMarker = L.marker([target.lat, target.lng], {
-            icon: L.divIcon({ className: 'region-hub-node', html: nodeHtml, iconSize: [96, 46], iconAnchor: [48, 14] })
+            icon: L.divIcon({ className: 'region-hub-node hover:!z-[2000]', html: nodeHtml, iconSize: [28, 28], iconAnchor: [14, 14] })
           });
 
           nodeMarker.on('click', function() {
@@ -1391,17 +1391,17 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
               '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/></svg>' +
             '</div>' +
           '</div>' +
-          '<div class="mt-0.5 px-2 py-0.5 rounded-md bg-obsidian-950/95 border ' + hubBorder + ' shadow-lg text-[9px] font-mono font-extrabold text-cyan-200 whitespace-nowrap">' +
+          '<div class="opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 pointer-events-none mt-1 px-2.5 py-0.5 rounded-md bg-obsidian-950/95 border ' + hubBorder + ' shadow-xl text-[9px] font-mono font-extrabold text-cyan-200 whitespace-nowrap z-50">' +
             'PUSAT ' + escapeHtml(wCode.toUpperCase()) + ' (' + regionItems.length + ')' +
           '</div>' +
         '</div>';
 
         var regionHubMarker = L.marker([regionHub.lat, regionHub.lng], {
           icon: L.divIcon({
-            className: 'wilayah-center-hub',
+            className: 'wilayah-center-hub hover:!z-[2000]',
             html: regionHubHtml,
-            iconSize: [130, 50],
-            iconAnchor: [65, 20]
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
           }),
           zIndexOffset: 900
         });
@@ -1450,15 +1450,21 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
 
         var pulseBg = isCritical ? 'bg-rose-500' : (isStatis ? 'bg-cyan-400' : 'bg-amber-400');
 
-        var customHtml = '<div class="relative flex items-center justify-center w-9 h-9 cursor-pointer group">' +
+        var areaLabel = escapeHtml(getProp(item, 'AreaName', 'areaName'));
+        var labelBorder = isCritical ? 'border-rose-400/80' : (isStatis ? 'border-cyan-400/80' : 'border-amber-400/80');
+
+        var customHtml = '<div class="relative flex flex-col items-center justify-center w-9 h-9 cursor-pointer group">' +
           '<div class="radar-pulse ' + pulseBg + ' opacity-75"></div>' +
           '<div class="w-8 h-8 rounded-xl ' + colorBg + ' flex items-center justify-center shadow-xl border-2 transition-transform duration-200 group-hover:scale-110">' +
             getSecurityMarkerSvg(secType, risk) +
           '</div>' +
+          '<div class="opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 pointer-events-none absolute top-9 px-2.5 py-0.5 rounded-md bg-obsidian-950/95 border ' + labelBorder + ' shadow-xl text-[10px] font-semibold text-white whitespace-nowrap z-50">' +
+            areaLabel +
+          '</div>' +
         '</div>';
 
         var icon = L.divIcon({
-          className: 'custom-pin',
+          className: 'custom-pin hover:!z-[2000]',
           html: customHtml,
           iconSize: [36, 36],
           iconAnchor: [18, 18],
