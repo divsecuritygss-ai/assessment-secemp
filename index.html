@@ -1,0 +1,2595 @@
+<!--
+============================================================
+APPLICATION : Security EMP (Geospatial Security Command Center)
+FILE        : index.html
+MODE        : VERCEL STATIC HOSTING + GAS JSON API
+VERSION     : v5.0.0
+SCHEMA      : v2.1.0
+YEAR        : 2026
+PREPARED BY : blinengah
+CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
+============================================================
+-->
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security EMP - Geospatial Command Center</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          colors: {
+            obsidian: {
+              950: '#060913',
+              900: '#0b101e',
+              850: '#101729',
+              800: '#161f36',
+              700: '#23304f'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    #map {
+      height: 100%;
+      width: 100%;
+      background-color: #060913;
+    }
+    .leaflet-popup-content-wrapper {
+      background: #0b101e !important;
+      color: #f8fafc !important;
+      border-radius: 1rem !important;
+      padding: 0 !important;
+      border: 1px solid #23304f;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+    }
+    .leaflet-popup-content {
+      margin: 0 !important;
+      line-height: 1.45;
+    }
+    .leaflet-popup-tip {
+      background: #0b101e !important;
+      border: 1px solid #23304f;
+    }
+    .leaflet-container a.leaflet-popup-close-button {
+      color: #94a3b8 !important;
+      padding: 8px 10px 0 0 !important;
+      font-size: 18px !important;
+    }
+    .leaflet-container a.leaflet-popup-close-button:hover {
+      color: #ffffff !important;
+    }
+
+    @keyframes neon-dash {
+      to { stroke-dashoffset: -36; }
+    }
+    .neon-arc-line {
+      stroke-dasharray: 8 6;
+      animation: neon-dash 1.4s linear infinite;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+    .neon-arc-glow {
+      filter: blur(3px);
+      opacity: 0.45;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 0.95; }
+      100% { transform: scale(2.4); opacity: 0; }
+    }
+    .radar-pulse {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      animation: pulse-ring 2.2s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(11, 16, 30, 0.5);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #23304f;
+      border-radius: 999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #38bdf8;
+    }
+    .bg-cyber-grid {
+      background-image:
+        linear-gradient(to right, rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+  </style>
+</head>
+<body class="bg-obsidian-950 text-slate-100 font-sans antialiased h-screen overflow-hidden flex flex-col selection:bg-cyan-500 selection:text-white">
+
+  <!-- ==================== 1. PORTAL LANDING PAGE ==================== -->
+  <div id="view-landing" class="fixed inset-0 z-50 bg-obsidian-950 bg-cyber-grid flex flex-col overflow-y-auto custom-scrollbar">
+    <header class="h-20 border-b border-obsidian-800/90 bg-obsidian-900/85 backdrop-blur-md px-6 lg:px-12 flex items-center justify-between shrink-0 sticky top-0 z-20">
+      <div class="flex items-center space-x-3.5">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/25 ring-1 ring-white/15">
+          <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
+        </div>
+        <div>
+          <span class="font-extrabold text-xl tracking-tight text-white">Security EMP</span>
+          <p class="text-xs text-slate-400">Integrated Geospatial Security & ISO Audit Command</p>
+        </div>
+      </div>
+
+      <button onclick="openLoginModal()" class="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/25 transition flex items-center space-x-2">
+        <i data-lucide="log-in" class="w-4 h-4"></i>
+        <span>Masuk Command Center</span>
+      </button>
+    </header>
+
+    <main class="flex-1 max-w-6xl mx-auto px-6 py-12 flex flex-col justify-center items-center text-center">
+      <div class="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-cyan-950/70 border border-cyan-800/70 text-cyan-300 text-xs font-semibold mb-6">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>Kesiapan Audit Integrasi ISO 14001:2015 & ISO 45001:2018</span>
+      </div>
+
+      <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight max-w-3xl">
+        Pusat Komando Pemetaan Ancaman & Kerawanan Fisik Terpadu
+      </h1>
+
+      <p class="mt-4 text-sm sm:text-base text-slate-400 max-w-2xl leading-relaxed">
+        Pemantauan geospasial terpusat dari Jakarta HQ ke seluruh wilayah operasi untuk identifikasi kerawanan pengamanan statis & mobile serta kepatuhan audit ISO secara real-time.
+      </p>
+
+      <div class="mt-6 flex flex-wrap justify-center gap-2 max-w-2xl">
+        <span class="px-3 py-1 rounded-lg bg-indigo-950/70 border border-indigo-500/40 text-xs font-mono text-indigo-300 font-bold">Jakarta HQ (Pusat)</span>
+        <span class="px-3 py-1 rounded-lg bg-obsidian-900 border border-obsidian-700 text-xs font-mono text-cyan-300">PGE</span>
+        <span class="px-3 py-1 rounded-lg bg-obsidian-900 border border-obsidian-700 text-xs font-mono text-cyan-300">Tonga</span>
+        <span class="px-3 py-1 rounded-lg bg-obsidian-900 border border-obsidian-700 text-xs font-mono text-cyan-300">ITA</span>
+        <span class="px-3 py-1 rounded-lg bg-obsidian-900 border border-obsidian-700 text-xs font-mono text-cyan-300">Bentu</span>
+        <span class="px-3 py-1 rounded-lg bg-obsidian-900 border border-obsidian-700 text-xs font-mono text-cyan-300">Siak</span>
+        <span class="px-3 py-1 rounded-lg bg-obsidian-900 border border-obsidian-700 text-xs font-mono text-cyan-300">Kampar</span>
+      </div>
+
+      <div class="mt-8">
+        <button onclick="openLoginModal()" class="px-8 py-3.5 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm rounded-xl shadow-xl shadow-cyan-500/25 transition flex items-center space-x-2.5">
+          <i data-lucide="radar" class="w-5 h-5"></i>
+          <span>Buka Live Threat Map</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-14 w-full text-left">
+        <div class="p-6 rounded-2xl bg-obsidian-900/90 border border-obsidian-800 hover:border-cyan-500/40 transition">
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center mb-4">
+            <i data-lucide="network" class="w-5 h-5"></i>
+          </div>
+          <h3 class="font-bold text-sm text-white">Konektivitas Jakarta HQ</h3>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">Visualisasi jaringan komando langsung dari Jakarta ke 6 wilayah operasi lapangan dengan indikator tingkat risiko real-time.</p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-obsidian-900/90 border border-obsidian-800 hover:border-indigo-500/40 transition">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center mb-4">
+            <i data-lucide="shield" class="w-5 h-5"></i>
+          </div>
+          <h3 class="font-bold text-sm text-white">Isolasi Akses Per Wilayah</h3>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">Setiap PIC wilayah hanya melihat dan mengelola data areanya sendiri, sementara Super Admin memantau keseluruhan wilayah.</p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-obsidian-900/90 border border-obsidian-800 hover:border-emerald-500/40 transition">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-4">
+            <i data-lucide="folder-lock" class="w-5 h-5"></i>
+          </div>
+          <h3 class="font-bold text-sm text-white">Dokumentasi Visual Terproteksi</h3>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">Foto identifikasi kerawanan dan tindakan mitigasi tersimpan rapi per folder wilayah di Google Drive dengan akses terautentikasi.</p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="py-5 border-t border-obsidian-800/80 text-center text-xs text-slate-500 bg-obsidian-950">
+      <p>© 2026 Security EMP v5.0.0 · Corporate Security & GSS · Prepared by blinengah</p>
+    </footer>
+  </div>
+
+  <!-- ==================== 2. MODAL LOGIN ==================== -->
+  <div id="modal-login" class="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-obsidian-900 border border-obsidian-700 rounded-2xl w-full max-w-md p-6 sm:p-8 shadow-2xl relative">
+      <button onclick="closeLoginModal()" aria-label="Tutup" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-obsidian-800">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/25 mx-auto mb-3">
+          <i data-lucide="lock" class="w-6 h-6 text-white"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white">Autentikasi Security EMP</h3>
+        <p class="text-xs text-slate-400 mt-1">Masuk sesuai akun Wilayah Kerja atau Super Admin</p>
+      </div>
+
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-4" autocomplete="off">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Username</label>
+          <div class="relative">
+            <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"></i>
+            <input type="text" id="login-username" placeholder="Masukkan username" required
+                   class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
+          <div class="relative">
+            <i data-lucide="key" class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"></i>
+            <input type="password" id="login-password" placeholder="Masukkan kata sandi" required
+                   class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500">
+            <button type="button" onclick="togglePasswordVisibility()" aria-label="Tampilkan sandi" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200">
+              <i id="eye-icon" data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-login-submit" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/25 transition flex items-center justify-center space-x-2">
+          <span>Verifikasi & Masuk</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 3. COMMAND CENTER WORKSPACE ==================== -->
+  <div id="view-app" class="hidden flex-1 flex flex-col lg:flex-row h-full overflow-hidden bg-obsidian-950">
+
+    <!-- Responsive Navigation: Bottom Bar on Mobile/Tablet, Left Sidebar on Desktop -->
+    <aside class="order-2 lg:order-1 w-full lg:w-56 bg-obsidian-900/95 backdrop-blur-md border-t lg:border-t-0 lg:border-r border-obsidian-800 flex flex-row lg:flex-col justify-between shrink-0 z-30">
+      <div class="flex-1 flex flex-row lg:flex-col">
+        <!-- Brand Header (Desktop Sidebar) -->
+        <div class="hidden lg:flex h-16 px-5 border-b border-obsidian-800 items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-500/20">
+            <i data-lucide="shield" class="w-5 h-5 text-white"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="font-extrabold text-sm tracking-tight text-white truncate">Security EMP</div>
+            <div class="text-[10px] font-mono text-cyan-400 truncate">COMMAND CONSOLE</div>
+          </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="flex-1 grid grid-flow-col auto-cols-fr lg:flex lg:flex-col p-1.5 lg:p-3 gap-1 lg:space-y-1.5 lg:mt-2">
+          <button type="button" onclick="resetToOverviewNetwork()" class="w-full px-2 lg:px-3 py-2 lg:py-2.5 rounded-xl bg-gradient-to-r from-cyan-500/20 to-indigo-500/15 border border-cyan-500/35 text-cyan-300 font-semibold text-[10px] lg:text-xs flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-1 lg:gap-3 transition">
+            <i data-lucide="layout-dashboard" class="w-4 h-4 text-cyan-400 shrink-0"></i>
+            <span class="truncate">Peta</span>
+          </button>
+
+          <button type="button" onclick="toggleAssessmentDrawer()" class="w-full px-2 lg:px-3 py-2 lg:py-2.5 rounded-xl hover:bg-obsidian-800 text-slate-300 hover:text-white font-medium text-[10px] lg:text-xs flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-1 lg:gap-3 transition">
+            <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+            <span class="truncate">Input</span>
+          </button>
+
+          <button type="button" onclick="showJakartaNetworkView()" class="w-full px-2 lg:px-3 py-2 lg:py-2.5 rounded-xl hover:bg-obsidian-800 text-slate-300 hover:text-white font-medium text-[10px] lg:text-xs flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-1 lg:gap-3 transition">
+            <i data-lucide="share-2" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+            <span class="truncate">Jakarta HQ</span>
+          </button>
+
+          <!-- Menu Khusus Super Admin: Kelola Akun -->
+          <button id="btn-user-mgmt" type="button" onclick="openUserMgmtModal()" class="hidden w-full px-2 lg:px-3 py-2 lg:py-2.5 rounded-xl hover:bg-obsidian-800 text-indigo-300 hover:text-white font-semibold text-[10px] lg:text-xs flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-1 lg:gap-3 transition">
+            <i data-lucide="users" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+            <span class="truncate">Kelola Akun</span>
+          </button>
+
+          <!-- Tombol Keluar (Mobile/Tablet Bottom Bar) -->
+          <button type="button" onclick="handleLogout()" title="Keluar Portal" class="lg:hidden w-full px-2 py-2 rounded-xl hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 font-medium text-[10px] flex flex-col items-center justify-center gap-1 transition">
+            <i data-lucide="log-out" class="w-4 h-4 text-rose-400 shrink-0"></i>
+            <span class="truncate">Keluar</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Bottom System Status & Logout (Desktop Only) -->
+      <div class="hidden lg:block p-3 border-t border-obsidian-800 space-y-2">
+        <div class="flex items-center space-x-2 px-3 py-2 rounded-xl bg-obsidian-950 border border-obsidian-800">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+          <span class="text-[11px] font-mono text-emerald-400 truncate">SYSTEM ACTIVE</span>
+        </div>
+        <button type="button" onclick="handleLogout()" title="Keluar Portal" class="w-full px-3 py-2 rounded-xl bg-obsidian-850 hover:bg-rose-950/70 text-slate-300 hover:text-rose-300 border border-obsidian-700 hover:border-rose-800/60 text-xs font-semibold flex items-center justify-start space-x-2.5 transition">
+          <i data-lucide="log-out" class="w-4 h-4 shrink-0"></i>
+          <span>Keluar Portal</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Right Content Area -->
+    <div class="order-1 lg:order-2 flex-1 flex flex-col min-w-0 overflow-hidden">
+
+      <!-- Top Search & Operational Status Header -->
+      <header class="h-14 lg:h-16 bg-obsidian-900/90 border-b border-obsidian-800 px-3 sm:px-4 lg:px-6 flex items-center justify-between gap-2.5 sm:gap-4 shrink-0 z-20">
+        <!-- Compact Brand Icon on Mobile/Tablet -->
+        <div class="flex lg:hidden items-center space-x-2 shrink-0">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-md">
+            <i data-lucide="shield" class="w-4 h-4 text-white"></i>
+          </div>
+          <span class="hidden sm:inline font-extrabold text-xs text-white">Security EMP</span>
+        </div>
+
+        <!-- Global Search Input -->
+        <div class="flex-1 max-w-xl relative">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"></i>
+          <input type="text" id="search-input" onkeyup="filterAssessments()" placeholder="Cari area, ancaman, mitigasi, wilayah, atau SOP..."
+                 class="w-full bg-obsidian-950 border border-obsidian-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition">
+        </div>
+
+        <!-- Operational Status Pill & User Badge -->
+        <div class="flex items-center space-x-3 shrink-0">
+          <div class="hidden md:flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-emerald-950/50 border border-emerald-500/30 text-[11px] font-mono font-semibold text-emerald-300">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span id="header-wilayah-badge">ALL SYSTEMS OPERATIONAL</span>
+          </div>
+
+          <div class="flex items-center space-x-2.5 pl-2 border-l border-obsidian-800">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-xs font-bold text-white">
+              <i data-lucide="user-check" class="w-4 h-4"></i>
+            </div>
+            <div class="hidden sm:block text-left">
+              <div id="header-user-badge" class="text-xs font-bold text-white leading-tight">Operator</div>
+              <div id="header-role-sub" class="text-[10px] font-mono text-cyan-400">SECURE ACCESS</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Dashboard Grid -->
+      <div class="flex-1 overflow-y-auto lg:overflow-hidden p-3 lg:p-4 grid grid-cols-1 lg:grid-cols-12 gap-3.5 min-h-0">
+
+        <!-- CENTER-LEFT COLUMN (7 cols): Live Threat Map + Telemetry Distribution -->
+        <div class="lg:col-span-7 flex flex-col gap-3.5 min-h-[520px] lg:min-h-0 overflow-hidden">
+
+          <!-- Card 1: Live Threat & Command Map -->
+          <section class="flex-1 bg-obsidian-900 border border-obsidian-800 rounded-2xl flex flex-col overflow-hidden shadow-xl min-h-[360px]">
+            <!-- Map Header Bar -->
+            <div class="px-4 py-2.5 bg-obsidian-900 border-b border-obsidian-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
+              <div class="flex items-center space-x-3">
+                <h2 class="text-xs sm:text-sm font-bold text-white tracking-tight">Live Command & Threat Map</h2>
+                <div class="hidden xl:flex items-center space-x-3 text-[11px] pl-3 border-l border-obsidian-800">
+                  <span class="flex items-center space-x-1 text-rose-400"><span class="w-2 h-2 rounded-full bg-rose-500"></span><span>Kritis</span></span>
+                  <span class="flex items-center space-x-1 text-amber-300"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span>Moderat</span></span>
+                  <span class="flex items-center space-x-1 text-cyan-300"><span class="w-2 h-2 rounded-full bg-cyan-400"></span><span>Statis/Rendah</span></span>
+                  <span class="flex items-center space-x-1 text-indigo-300"><span class="w-2 h-2 rounded-full bg-indigo-400"></span><span>Jakarta HQ</span></span>
+                </div>
+              </div>
+
+              <!-- Basemap Switcher & Region Selector Above Map -->
+              <div class="flex items-center flex-wrap gap-1.5">
+                <select id="filter-wilayah" onchange="handleWilayahFilterChange()" class="bg-obsidian-950 border border-cyan-500/40 rounded-lg px-2.5 py-1 text-[11px] font-bold text-cyan-300 focus:outline-none">
+                  <option value="ALL">Semua Wilayah (7)</option>
+                  <option value="Jakarta">Jakarta HQ</option>
+                  <option value="PGE">PGE</option>
+                  <option value="Tonga">Tonga</option>
+                  <option value="ITA">ITA (Kurau)</option>
+                  <option value="Bentu">Bentu</option>
+                  <option value="Siak">Siak</option>
+                  <option value="Kampar">Kampar</option>
+                </select>
+
+                <div class="flex items-center bg-obsidian-950 border border-obsidian-700 rounded-lg p-0.5">
+                  <button type="button" onclick="setBaseMap('dark')" id="btn-map-dark" class="px-2 py-1 rounded-md text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition">Dark</button>
+                  <button type="button" onclick="setBaseMap('satellite')" id="btn-map-sat" class="px-2 py-1 rounded-md text-[10px] font-semibold text-slate-400 hover:text-white transition">Satelit HD</button>
+                  <button type="button" onclick="setBaseMap('osm')" id="btn-map-osm" class="px-2 py-1 rounded-md text-[10px] font-semibold text-slate-400 hover:text-white transition">Jalan</button>
+                </div>
+
+                <button type="button" onclick="resetToActiveWilayahCenter()" title="Reset Posisi Peta" class="p-1.5 rounded-lg bg-obsidian-950 border border-obsidian-700 text-slate-300 hover:text-cyan-300 transition">
+                  <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Map Container -->
+            <div class="flex-1 relative min-h-0">
+              <div id="map"></div>
+
+              <!-- Subtle Map Loading Overlay -->
+              <div id="map-loading-overlay" class="hidden pointer-events-none absolute inset-0 z-[450] bg-obsidian-950/40 backdrop-blur-[1px] flex items-center justify-center">
+                <div class="px-3.5 py-2 rounded-xl bg-obsidian-900/95 border border-cyan-500/40 shadow-xl flex items-center space-x-2.5 text-[11px] text-cyan-200 font-medium">
+                  <div class="w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Memuat lapisan peta...</span>
+                </div>
+              </div>
+
+              <!-- Bottom Vector Bar Inside Map -->
+              <div class="absolute bottom-2.5 left-2.5 right-2.5 z-[500] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+                <div class="pointer-events-auto bg-obsidian-900/90 backdrop-blur border border-obsidian-700 px-3 py-1 rounded-lg text-[10px] font-mono text-slate-300 flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                  <span id="live-cursor-coords" class="text-cyan-300 font-bold">-6.219009, 106.834458</span>
+                  <span class="hidden sm:inline text-slate-600">|</span>
+                  <span class="hidden sm:inline font-sans text-slate-400">Klik peta untuk mengunci koordinat</span>
+                </div>
+                <button type="button" onclick="showJakartaNetworkView()" class="pointer-events-auto bg-indigo-950/90 hover:bg-indigo-900 backdrop-blur border border-indigo-500/50 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold text-indigo-200 flex items-center space-x-1.5 shadow-lg transition">
+                  <i data-lucide="zap" class="w-3 h-3 text-cyan-400"></i>
+                  <span>HUB JAKARTA HQ</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Card 2: Regional Risk & Sector Telemetry -->
+          <section class="h-44 bg-obsidian-900 border border-obsidian-800 rounded-2xl p-3.5 flex flex-col justify-between shrink-0 shadow-xl">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold text-white">Telemetri Distribusi Kerawanan Wilayah</h3>
+                <p class="text-[10px] text-slate-400">Proporsi titik pengamanan aktif terhubung ke Pusat Komando Jakarta</p>
+              </div>
+              <div class="flex items-center space-x-3 text-[10px] font-mono">
+                <span class="text-cyan-400 flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-cyan-400"></span><span>Statis</span></span>
+                <span class="text-amber-400 flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span>Mobile</span></span>
+                <span class="text-rose-400 flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span><span>Kritis</span></span>
+              </div>
+            </div>
+
+            <div id="regional-telemetry-bars" class="grid grid-cols-7 gap-2 items-end h-24 pt-2"></div>
+          </section>
+        </div>
+
+        <!-- RIGHT COLUMN (5 cols): Security Posture KPIs + Real-Time Assessment Feed -->
+        <div class="lg:col-span-5 flex flex-col gap-3.5 min-h-[520px] lg:min-h-0 overflow-hidden">
+
+          <!-- Card 3: Security Posture -->
+          <section class="bg-obsidian-900 border border-obsidian-800 rounded-2xl p-3.5 shrink-0 shadow-xl space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xs sm:text-sm font-bold text-white tracking-tight">Security Posture</h2>
+              <span id="footer-map-label" class="text-[10px] font-mono text-slate-400 truncate max-w-[200px]">Pusat: Jakarta HQ</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+              <!-- Posture Card 1: Multi-Color Category Donut Chart with Hover Percentage Tooltip -->
+              <button type="button" id="kpi-card-ALL" onclick="applyKpiFilter('ALL')" class="relative p-3 rounded-xl bg-obsidian-950 border border-cyan-500/50 ring-1 ring-cyan-500/30 hover:border-cyan-400 flex flex-col items-center justify-between text-center transition cursor-pointer">
+                <span class="text-[10px] font-semibold text-slate-300">Total Titik</span>
+
+                <!-- Floating Percentage Tooltip -->
+                <div id="donut-hover-tooltip" class="hidden pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 z-30 px-2.5 py-1 rounded-lg bg-obsidian-900 border border-cyan-500/50 shadow-xl text-[10px] font-mono font-bold text-white whitespace-nowrap">
+                  0%
+                </div>
+
+                <div class="relative w-14 h-14 my-1 flex items-center justify-center">
+                  <svg class="w-14 h-14 -rotate-90 overflow-visible" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#161f36" stroke-width="3.8" />
+                    <circle id="gauge-seg-kritis" cx="18" cy="18" r="15.9155" fill="none" stroke="#f43f5e" stroke-width="3.8" stroke-dasharray="0, 100" stroke-dashoffset="0" pointer-events="stroke"
+                            onmouseenter="showDonutTooltip('Kritis', this)" onmouseleave="hideDonutTooltip(this)"
+                            class="transition-all duration-300 hover:opacity-95"><title id="title-seg-kritis">Kritis: 0%</title></circle>
+                    <circle id="gauge-seg-moderat" cx="18" cy="18" r="15.9155" fill="none" stroke="#f59e0b" stroke-width="3.8" stroke-dasharray="0, 100" stroke-dashoffset="0" pointer-events="stroke"
+                            onmouseenter="showDonutTooltip('Moderat', this)" onmouseleave="hideDonutTooltip(this)"
+                            class="transition-all duration-300 hover:opacity-95"><title id="title-seg-moderat">Moderat: 0%</title></circle>
+                    <circle id="gauge-seg-rendah" cx="18" cy="18" r="15.9155" fill="none" stroke="#38bdf8" stroke-width="3.8" stroke-dasharray="0, 100" stroke-dashoffset="0" pointer-events="stroke"
+                            onmouseenter="showDonutTooltip('Rendah', this)" onmouseleave="hideDonutTooltip(this)"
+                            class="transition-all duration-300 hover:opacity-95"><title id="title-seg-rendah">Rendah: 0%</title></circle>
+                  </svg>
+                  <span id="stat-total" class="pointer-events-none absolute text-sm font-extrabold text-white font-mono">0</span>
+                </div>
+
+                <div class="flex items-center justify-center space-x-2 text-[8px] font-mono text-slate-400">
+                  <span onmouseenter="showDonutTooltip('Kritis')" onmouseleave="hideDonutTooltip()" class="flex items-center space-x-0.5 hover:text-rose-300"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span>K</span></span>
+                  <span onmouseenter="showDonutTooltip('Moderat')" onmouseleave="hideDonutTooltip()" class="flex items-center space-x-0.5 hover:text-amber-300"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span>M</span></span>
+                  <span onmouseenter="showDonutTooltip('Rendah')" onmouseleave="hideDonutTooltip()" class="flex items-center space-x-0.5 hover:text-cyan-300"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span><span>R</span></span>
+                </div>
+              </button>
+
+              <!-- Posture Card 2: Risiko Kritis & Moderat -->
+              <div class="p-3 rounded-xl bg-obsidian-950 border border-obsidian-800 flex flex-col justify-between text-left">
+                <span class="text-[10px] font-semibold text-slate-300">Level Risiko</span>
+                <div class="my-1">
+                  <div class="flex items-baseline space-x-1.5">
+                    <span id="stat-critical" class="text-xl font-extrabold text-rose-400 font-mono">0</span>
+                    <span class="text-[10px] text-rose-300 font-semibold">Kritis</span>
+                  </div>
+                  <div class="text-[10px] text-amber-300 font-mono mt-0.5"><span id="stat-moderat">0</span> Moderat</div>
+                </div>
+                <div class="flex space-x-1">
+                  <button type="button" id="kpi-card-Kritis" onclick="applyKpiFilter('Kritis')" class="flex-1 py-1 rounded bg-rose-500/20 hover:bg-rose-500/35 border border-rose-500/40 text-[9px] font-bold text-rose-300 transition">Kritis</button>
+                  <button type="button" id="kpi-card-Moderat" onclick="applyKpiFilter('Moderat')" class="flex-1 py-1 rounded bg-amber-500/20 hover:bg-amber-500/35 border border-amber-500/40 text-[9px] font-bold text-amber-300 transition">Moderat</button>
+                </div>
+              </div>
+
+              <!-- Posture Card 3: Sistem Pengamanan (Statis / Mobile) -->
+              <div class="p-3 rounded-xl bg-obsidian-950 border border-obsidian-800 flex flex-col justify-between text-left">
+                <span class="text-[10px] font-semibold text-slate-300">Pengamanan</span>
+                <div class="my-1 space-y-1">
+                  <div class="flex justify-between items-center text-[11px] font-mono">
+                    <span class="text-cyan-300">Statis</span>
+                    <span id="stat-statis" class="font-extrabold text-white">0</span>
+                  </div>
+                  <div class="flex justify-between items-center text-[11px] font-mono">
+                    <span class="text-amber-300">Mobile</span>
+                    <span id="stat-mobile" class="font-extrabold text-white">0</span>
+                  </div>
+                </div>
+                <div class="flex space-x-1">
+                  <button type="button" id="kpi-card-Statis" onclick="applyKpiFilter('Statis')" class="flex-1 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/35 border border-cyan-500/40 text-[9px] font-bold text-cyan-300 transition">Statis</button>
+                  <button type="button" id="kpi-card-Mobile" onclick="applyKpiFilter('Mobile')" class="flex-1 py-1 rounded bg-amber-500/20 hover:bg-amber-500/35 border border-amber-500/40 text-[9px] font-bold text-amber-300 transition">Mobile</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Card 4: Real-Time Assessment Feed -->
+          <section class="flex-1 bg-obsidian-900 border border-obsidian-800 rounded-2xl flex flex-col overflow-hidden shadow-xl min-h-[260px]">
+            <div class="px-4 py-2.5 border-b border-obsidian-800 flex items-center justify-between gap-2 shrink-0">
+              <h3 class="text-xs sm:text-sm font-bold text-white">Daftar Titik Kerawanan</h3>
+              <div class="flex items-center space-x-1.5">
+                <select id="filter-system" onchange="filterAssessments()" class="bg-obsidian-950 border border-obsidian-700 rounded-lg px-2 py-1 text-[10px] text-slate-300 focus:outline-none">
+                  <option value="ALL">Sistem: Semua</option>
+                  <option value="Statis">Statis</option>
+                  <option value="Mobile">Mobile</option>
+                </select>
+                <select id="filter-risk" onchange="filterAssessments()" class="bg-obsidian-950 border border-obsidian-700 rounded-lg px-2 py-1 text-[10px] text-slate-300 focus:outline-none">
+                  <option value="ALL">Risiko: Semua</option>
+                  <option value="Kritis">Kritis</option>
+                  <option value="Moderat">Moderat</option>
+                  <option value="Rendah">Rendah</option>
+                </select>
+                <span id="list-count" class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-bold">0</span>
+              </div>
+            </div>
+
+            <div id="assessment-list" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 4. DRAWER: INPUT / EDIT ASESMEN ==================== -->
+  <div id="assessment-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[520px] bg-obsidian-900 border-l border-obsidian-700 shadow-2xl z-[9999] transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="p-4 border-b border-obsidian-700 bg-obsidian-950 flex justify-between items-center shrink-0">
+      <div class="flex items-center space-x-3">
+        <div class="p-2.5 rounded-xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+          <i data-lucide="shield-plus" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 id="drawer-title" class="font-bold text-sm text-white">Input Asesmen Kerawanan Security</h3>
+          <p id="drawer-subtitle" class="text-[11px] text-cyan-400 font-mono">Wilayah Kerja Terotorisasi</p>
+        </div>
+      </div>
+      <button onclick="toggleAssessmentDrawer()" aria-label="Tutup drawer" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-obsidian-800">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <form id="assessment-form" onsubmit="handleAssessmentSubmit(event)" class="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
+      <input type="hidden" id="form-id">
+
+      <div class="p-4 rounded-2xl bg-obsidian-950/90 border border-obsidian-800 space-y-3">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-cyan-400">1. Lokasi & Klasifikasi Wilayah</div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Wilayah Kerja <span class="text-rose-400">*</span></label>
+            <select id="form-wilayah" onchange="onFormWilayahChange()" class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-cyan-300 font-bold focus:outline-none focus:border-cyan-500">
+              <option value="PGE">PGE</option>
+              <option value="Tonga">Tonga</option>
+              <option value="ITA">ITA</option>
+              <option value="Bentu">Bentu</option>
+              <option value="Siak">Siak</option>
+              <option value="Kampar">Kampar</option>
+              <option value="Jakarta">Jakarta</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Sistem Pengamanan <span class="text-rose-400">*</span></label>
+            <select id="form-security-type" class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+              <option value="Statis">Statis (Pos, CCTV, Barrier)</option>
+              <option value="Mobile">Mobile (Patroli Motor, Mobil, Boat)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Nama Area / Titik Fasilitas <span class="text-rose-400">*</span></label>
+          <input type="text" id="form-area-name" required placeholder="Contoh: Main Gate 1, Tangki B3, Dermaga Jetty"
+                 class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Sektor Zona <span class="text-rose-400">*</span></label>
+          <select id="form-sector" class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+            <option value="Zona Terbatas (Perimeter Utama)">Zona Terbatas (Perimeter Utama)</option>
+            <option value="Zona Logistik & Gudang B3">Zona Logistik & Gudang B3</option>
+            <option value="Zona Jetty & Water Front">Zona Jetty & Water Front</option>
+            <option value="Zona Operasional Kritis">Zona Operasional Kritis</option>
+            <option value="Zona Perkantoran & Publik">Zona Perkantoran & Publik</option>
+          </select>
+        </div>
+
+        <div class="pt-1 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-[11px] font-semibold text-slate-300">Koordinat GPS</span>
+            <button type="button" onclick="setFormWilayahDefaultCoords()" class="text-[11px] text-cyan-400 hover:underline">Gunakan Pusat Wilayah</button>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] text-slate-400">Latitude</label>
+              <input type="number" step="any" id="form-lat" required
+                     class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400">Longitude</label>
+              <input type="number" step="any" id="form-lng" required
+                     class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-obsidian-950/90 border border-obsidian-800 space-y-3">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-amber-400">2. Analisis Ancaman, Kerawanan & Kepatuhan ISO</div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Tingkat Risiko</label>
+            <select id="form-risk-level" class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+              <option value="Kritis">Kritis (High Risk)</option>
+              <option value="Moderat">Moderat (Medium)</option>
+              <option value="Rendah">Rendah (Controlled)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Dampak Kepatuhan ISO</label>
+            <select id="form-iso-impact" class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+              <option value="ISO 45001 (K3 & Keselamatan Fisik)">ISO 45001 (K3 Fisik)</option>
+              <option value="ISO 14001 (Pencemaran/Lingkungan B3)">ISO 14001 (Lingkungan B3)</option>
+              <option value="Terintegrasi (K3 & Lingkungan)">Terintegrasi (K3 & Lingkungan)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Identifikasi Ancaman (Threat) <span class="text-rose-400">*</span></label>
+          <textarea id="form-threat" rows="2" required placeholder="Uraikan potensi ancaman..."
+                    class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Kondisi Kerawanan (Vulnerability) <span class="text-rose-400">*</span></label>
+          <textarea id="form-vulnerability" rows="2" required placeholder="Uraikan kelemahan fisik atau celah pengawasan..."
+                    class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Tindakan Mitigasi & Antisipasi <span class="text-rose-400">*</span></label>
+          <textarea id="form-mitigation" rows="2" required placeholder="Uraikan rencana aksi pengamanan..."
+                    class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Referensi Dokumen SOP</label>
+          <input type="text" id="form-sop" placeholder="Contoh: SOP-SEC-ITA-009"
+                 class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-obsidian-950/90 border border-obsidian-800 space-y-3">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">3. Bukti Foto Lapangan (Otomatis Kompresi HD)</div>
+
+        <div class="p-3 rounded-xl bg-obsidian-900 border border-amber-500/30">
+          <label class="block text-xs font-semibold text-amber-300 mb-1.5">Foto 1: Identifikasi Kerawanan</label>
+          <input type="file" id="form-file-threat" accept="image/jpeg,image/png,image/webp" onchange="handleFileChange(this, 'preview-threat', 'data-threat-base64')"
+                 class="w-full text-[11px] text-slate-400 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-obsidian-800 file:text-slate-200 hover:file:bg-obsidian-700">
+          <input type="hidden" id="data-threat-base64">
+          <input type="hidden" id="form-url-threat">
+          <div id="container-preview-threat" class="mt-2.5 hidden">
+            <img id="preview-threat" src="" class="h-32 w-full object-cover rounded-xl border border-amber-500/40">
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-obsidian-900 border border-emerald-500/30">
+          <label class="block text-xs font-semibold text-emerald-300 mb-1.5">Foto 2: Tindakan Antisipasi / Mitigasi</label>
+          <input type="file" id="form-file-mitigation" accept="image/jpeg,image/png,image/webp" onchange="handleFileChange(this, 'preview-mitigation', 'data-mitigation-base64')"
+                 class="w-full text-[11px] text-slate-400 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-obsidian-800 file:text-slate-200 hover:file:bg-obsidian-700">
+          <input type="hidden" id="data-mitigation-base64">
+          <input type="hidden" id="form-url-mitigation">
+          <div id="container-preview-mitigation" class="mt-2.5 hidden">
+            <img id="preview-mitigation" src="" class="h-32 w-full object-cover rounded-xl border border-emerald-500/40">
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-1 flex space-x-3">
+        <button type="button" onclick="toggleAssessmentDrawer()" class="w-1/3 py-2.5 bg-obsidian-800 hover:bg-obsidian-700 text-slate-300 rounded-xl text-xs font-semibold">Batal</button>
+        <button type="submit" id="btn-save-assessment" class="w-2/3 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-cyan-500/25 flex items-center justify-center space-x-2">
+          <i data-lucide="save" class="w-4 h-4"></i>
+          <span>Simpan Data Asesmen</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ==================== 5. MODAL KELOLA AKUN (KHUSUS SUPER ADMIN) ==================== -->
+  <div id="modal-users" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+    <div class="bg-obsidian-900 border border-obsidian-700 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="p-4 bg-obsidian-950 border-b border-obsidian-800 flex justify-between items-center shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="p-2 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+            <i data-lucide="users" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Manajemen Akun & Otorisasi Wilayah Kerja</h3>
+            <p class="text-[11px] text-slate-400">Tambah akun baru, reset kata sandi pengguna, atau nonaktifkan akun</p>
+          </div>
+        </div>
+        <button onclick="closeUserMgmtModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-obsidian-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto custom-scrollbar space-y-5 flex-1">
+        <form onsubmit="handleCreateUserSubmit(event)" class="bg-obsidian-950 p-4 rounded-2xl border border-obsidian-800 space-y-3" autocomplete="off">
+          <div class="text-xs font-bold text-cyan-400 flex items-center space-x-1.5">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>Buat Akun Pengguna Baru</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Username <span class="text-rose-400">*</span></label>
+              <input type="text" id="new-user-username" required placeholder="Contoh: pic_pge_02"
+                     class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Nama Lengkap <span class="text-rose-400">*</span></label>
+              <input type="text" id="new-user-fullname" required placeholder="Nama PIC / Koordinator"
+                     class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Password Awal (Min. 8 Karakter) <span class="text-rose-400">*</span></label>
+              <input type="password" id="new-user-password" required minlength="8" placeholder="Minimal 8 karakter"
+                     class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Role Hak Akses <span class="text-rose-400">*</span></label>
+              <select id="new-user-role" onchange="onNewUserRoleChange()" class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                <option value="OPERATOR WILAYAH">OPERATOR WILAYAH</option>
+                <option value="SUPER ADMIN">SUPER ADMIN</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Wilayah Kerja <span class="text-rose-400">*</span></label>
+              <select id="new-user-wilayah" class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3 py-2 text-xs text-cyan-300 font-bold focus:outline-none focus:border-cyan-500">
+                <option value="PGE">PGE</option>
+                <option value="Tonga">Tonga</option>
+                <option value="ITA">ITA</option>
+                <option value="Bentu">Bentu</option>
+                <option value="Siak">Siak</option>
+                <option value="Kampar">Kampar</option>
+                <option value="Jakarta">Jakarta</option>
+              </select>
+            </div>
+            <div>
+              <button type="submit" id="btn-create-user" class="w-full py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center space-x-1.5">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Simpan Akun</span>
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <div>
+          <div class="text-xs font-bold text-slate-300 mb-2">Daftar Pengguna Aktif</div>
+          <div class="overflow-x-auto border border-obsidian-800 rounded-2xl">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-obsidian-950 border-b border-obsidian-800 text-slate-400 font-mono text-[11px]">
+                  <th class="p-3">ID</th>
+                  <th class="p-3">Username</th>
+                  <th class="p-3">Nama Lengkap</th>
+                  <th class="p-3">Role</th>
+                  <th class="p-3">Wilayah</th>
+                  <th class="p-3 text-right">Aksi Pengelolaan</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body" class="divide-y divide-obsidian-800 text-slate-300"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-obsidian-950 border-t border-obsidian-800 flex justify-end shrink-0">
+        <button onclick="closeUserMgmtModal()" class="px-4 py-1.5 bg-obsidian-800 hover:bg-obsidian-700 text-slate-200 rounded-xl text-xs font-semibold">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 6. MODAL RESET PASSWORD ==================== -->
+  <div id="modal-reset-password" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[10000] hidden flex items-center justify-center p-4">
+    <div class="bg-obsidian-900 border border-obsidian-700 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h4 class="font-bold text-sm text-white">Reset Kata Sandi Pengguna</h4>
+        <button onclick="closeResetPasswordModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <form onsubmit="handleResetPasswordSubmit(event)" class="space-y-4" autocomplete="off">
+        <input type="hidden" id="reset-target-user-id">
+        <div class="p-3 bg-obsidian-950 rounded-xl border border-obsidian-800 text-xs text-slate-300">
+          Target Akun: <strong id="reset-target-username" class="text-cyan-400 font-mono"></strong>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Password Baru (Minimal 8 Karakter)</label>
+          <input type="password" id="reset-new-password" required minlength="8" placeholder="Masukkan kata sandi baru"
+                 class="w-full bg-obsidian-800 border border-obsidian-700 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+        </div>
+        <div class="flex space-x-2.5 pt-1">
+          <button type="button" onclick="closeResetPasswordModal()" class="w-1/2 py-2 bg-obsidian-800 hover:bg-obsidian-700 text-slate-300 rounded-xl text-xs font-semibold">Batal</button>
+          <button type="submit" id="btn-submit-reset-pass" class="w-1/2 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs">Simpan Password Baru</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 7. MODAL PREVIEW FOTO FULLSCREEN ==================== -->
+  <div id="modal-image-viewer" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[10000] hidden flex items-center justify-center p-4">
+    <div class="relative max-w-4xl w-full bg-obsidian-900 border border-obsidian-700 rounded-2xl overflow-hidden shadow-2xl">
+      <div class="p-3 bg-obsidian-950 border-b border-obsidian-800 flex justify-between items-center">
+        <h4 id="image-viewer-title" class="text-xs font-bold text-white">Detail Dokumentasi Visual</h4>
+        <button onclick="closeImageViewer()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-3 bg-black flex items-center justify-center min-h-[260px]">
+        <img id="image-viewer-src" src="" class="max-h-[72vh] w-auto object-contain rounded-lg">
+      </div>
+      <div class="p-3 bg-obsidian-950 text-center text-xs text-slate-300 font-medium" id="image-viewer-caption">
+        Security EMP Visual Evidence
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 8. POPUP PROSES & STATUS AKSI ==================== -->
+  <div id="modal-process" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10050] hidden flex items-center justify-center p-4">
+    <div class="bg-obsidian-900 border border-obsidian-700 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center space-y-4">
+      <div id="process-icon-loading" class="mx-auto w-16 h-16 relative flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full border-4 border-cyan-500/20"></div>
+        <div class="absolute inset-0 rounded-full border-4 border-cyan-400 border-t-transparent animate-spin"></div>
+        <div class="w-9 h-9 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center">
+          <i data-lucide="shield" class="w-5 h-5 animate-pulse"></i>
+        </div>
+      </div>
+
+      <div id="process-icon-success" class="hidden mx-auto w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/15">
+        <i data-lucide="check-circle-2" class="w-9 h-9"></i>
+      </div>
+
+      <div id="process-icon-error" class="hidden mx-auto w-16 h-16 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-400 flex items-center justify-center shadow-lg shadow-rose-500/15">
+        <i data-lucide="x-circle" class="w-9 h-9"></i>
+      </div>
+
+      <div class="space-y-1.5">
+        <h4 id="process-title" class="text-base font-extrabold text-white">Memproses Permintaan...</h4>
+        <p id="process-message" class="text-xs text-slate-300 leading-relaxed">Mohon tunggu, sistem sedang berkomunikasi dengan server.</p>
+      </div>
+
+      <div id="process-action-bar" class="hidden pt-2">
+        <button type="button" id="btn-process-ok" onclick="closeProcessModal()" class="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+          OK / Lanjutkan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 9. TOAST NOTIFICATION ==================== -->
+  <div id="toast" class="fixed bottom-8 right-8 z-[10000] transform translate-y-24 opacity-0 transition-all duration-300 bg-obsidian-900 border border-cyan-500/50 shadow-2xl rounded-2xl px-4 py-3 flex items-center space-x-3 text-xs text-slate-100">
+    <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5 text-cyan-400 shrink-0"></i>
+    <span id="toast-message" class="font-medium">Notifikasi sistem</span>
+  </div>
+
+  <!-- ==================== JAVASCRIPT APPLICATION ENGINE (VERCEL <-> GAS API) ==================== -->
+  <script>
+    // WAJIB DIISI: Ganti dengan URL Deployment Web App Google Apps Script (/exec) Anda
+    var GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw5OChwvJscnS6LTggxXioxscNq5-IyrLmtNmSLduNF7Za_58FPsNeC5hXrDIRUgrZe/exec';
+
+    var STORAGE_KEYS = {
+      TOKEN: 'security_emp_token',
+      USER: 'security_emp_user',
+      WILAYAH_MAP: 'security_emp_wilayah_map'
+    };
+
+    var DEFAULT_WILAYAH_MAP = {
+      ALL:     { code: 'ALL',     name: 'Jaringan Komando Jakarta HQ', lat: -1.850000,   lng: 103.500000, zoom: 6 },
+      PGE:     { code: 'PGE',     name: 'Wilayah Kerja PGE',           lat: 5.06838752,  lng: 97.25574993, zoom: 14 },
+      Tonga:   { code: 'Tonga',   name: 'Wilayah Kerja Tonga',         lat: 1.259027024, lng: 99.85646294, zoom: 14 },
+      ITA:     { code: 'ITA',     name: 'Wilayah Kerja ITA - Kurau',   lat: 1.055754899, lng: 102.259218,  zoom: 15 },
+      Bentu:   { code: 'Bentu',   name: 'Wilayah Kerja Bentu',         lat: 0.5478978231,lng: 101.4630103, zoom: 14 },
+      Siak:    { code: 'Siak',    name: 'Wilayah Kerja Siak',          lat: 0.7802939843,lng: 100.7929773, zoom: 14 },
+      Kampar:  { code: 'Kampar',  name: 'Wilayah Kerja Kampar',        lat: -0.0637072309,lng: 102.3259672, zoom: 14 },
+      Jakarta: { code: 'Jakarta', name: 'Jakarta HQ (Command Center)', lat: -6.219009087,lng: 106.8344576, zoom: 15 }
+    };
+
+    var REGION_CODES = ['PGE', 'Tonga', 'ITA', 'Bentu', 'Siak', 'Kampar', 'Jakarta'];
+
+    var currentUser = null;
+    var currentSessionToken = null;
+    var activeWilayahScope = 'ALL';
+    var assessments = [];
+    var photoCache = {};
+    var map = null;
+    var markersLayer = L.layerGroup();
+    var networkLayer = L.layerGroup();
+    var tempClickMarker = null;
+    var currentTileType = 'dark';
+    var markerRegistry = {};
+
+    /**
+     * API Client Universal ke Google Apps Script Web App
+     */
+    function callGasApi(action, payload) {
+      if (!GAS_API_URL || GAS_API_URL.indexOf('GANTI_DENGAN_DEPLOYMENT_ID_ANDA') !== -1) {
+        return Promise.reject(new Error('Konfigurasi GAS_API_URL pada index.html belum diisi dengan URL Web App (/exec) Anda.'));
+      }
+
+      var bodyObj = Object.assign({}, payload || {}, {
+        action: action,
+        sessionToken: currentSessionToken || ''
+      });
+
+      return fetch(GAS_API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify(bodyObj)
+      })
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error('HTTP Error ' + response.status + ' dari server API.');
+        }
+        return response.json();
+      })
+      .then(function(res) {
+        if (res && res.sessionExpired) {
+          clearSavedSession();
+        }
+        return res;
+      });
+    }
+
+    function saveSessionToStorage(token, user, wilayahMap) {
+      try {
+        sessionStorage.setItem(STORAGE_KEYS.TOKEN, token);
+        sessionStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+        sessionStorage.setItem(STORAGE_KEYS.WILAYAH_MAP, JSON.stringify(wilayahMap));
+      } catch (e) {}
+    }
+
+    function clearSavedSession() {
+      try {
+        sessionStorage.removeItem(STORAGE_KEYS.TOKEN);
+        sessionStorage.removeItem(STORAGE_KEYS.USER);
+        sessionStorage.removeItem(STORAGE_KEYS.WILAYAH_MAP);
+      } catch (e) {}
+    }
+
+    function restoreSessionFromStorage() {
+      try {
+        var token = sessionStorage.getItem(STORAGE_KEYS.TOKEN);
+        var rawUser = sessionStorage.getItem(STORAGE_KEYS.USER);
+        var rawMap = sessionStorage.getItem(STORAGE_KEYS.WILAYAH_MAP);
+        if (token && rawUser) {
+          currentSessionToken = token;
+          currentUser = JSON.parse(rawUser);
+          if (rawMap) {
+            Object.assign(DEFAULT_WILAYAH_MAP, JSON.parse(rawMap));
+          }
+          applyUserRoleScopeUI();
+          enterApplication(true);
+        }
+      } catch (e) {
+        clearSavedSession();
+      }
+    }
+
+    function createResilientTileLayer(url, options) {
+      var layer = L.tileLayer(url, Object.assign({
+        crossOrigin: true,
+        keepBuffer: 4,
+        updateWhenIdle: false,
+        updateWhenZooming: false
+      }, options));
+
+      layer.on('loading', function() {
+        var overlay = document.getElementById('map-loading-overlay');
+        if (overlay) overlay.classList.remove('hidden');
+      });
+
+      layer.on('load', function() {
+        var overlay = document.getElementById('map-loading-overlay');
+        if (overlay) overlay.classList.add('hidden');
+      });
+
+      layer.on('tileerror', function(err) {
+        var tile = err && err.tile;
+        if (!tile) return;
+        var retries = parseInt(tile.getAttribute('data-retry') || '0', 10);
+        if (retries < 3) {
+          tile.setAttribute('data-retry', String(retries + 1));
+          var origSrc = tile.getAttribute('data-orig-src') || tile.src.split('?')[0];
+          tile.setAttribute('data-orig-src', origSrc);
+          setTimeout(function() {
+            tile.src = origSrc + '?retry=' + (retries + 1) + '&t=' + Date.now();
+          }, 500 * (retries + 1));
+        }
+      });
+
+      return layer;
+    }
+
+    var baseTileLayers = {
+      dark: createResilientTileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; Esri, HERE &mdash; Security EMP Command',
+        maxZoom: 19,
+        maxNativeZoom: 15
+      }),
+      satellite: createResilientTileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; Esri World Imagery &mdash; Security EMP Command',
+        maxZoom: 19,
+        maxNativeZoom: 16
+      }),
+      osm: createResilientTileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19,
+        maxNativeZoom: 18
+      })
+    };
+
+    function escapeHtml(str) {
+      if (str === undefined || str === null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function safeUrl(url) {
+      var s = String(url || '').trim();
+      if (s.indexOf('https://') === 0 || s.indexOf('data:image/') === 0) return s;
+      return '';
+    }
+
+    function isGoogleDriveUrl(url) {
+      var s = String(url || '').trim();
+      return s.indexOf('gdrive:') === 0 ||
+             s.indexOf('drive.google.com') !== -1 ||
+             s.indexOf('docs.google.com') !== -1;
+    }
+
+    function getProp(obj) {
+      if (!obj) return '';
+      for (var i = 1; i < arguments.length; i++) {
+        var k = arguments[i];
+        if (obj[k] !== undefined && obj[k] !== null) return obj[k];
+      }
+      return '';
+    }
+
+    function getActiveCenter() {
+      return DEFAULT_WILAYAH_MAP[activeWilayahScope] || DEFAULT_WILAYAH_MAP.ALL;
+    }
+
+    function getSecurityMarkerSvg(secType, riskLevel) {
+      if (riskLevel === 'Kritis') {
+        return '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+      }
+      if (secType === 'Mobile') {
+        return '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>';
+      }
+      return '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
+    }
+
+    window.initMap = function() {
+      if (map) return;
+      var center = getActiveCenter();
+
+      map = L.map('map', {
+        center: [center.lat, center.lng],
+        zoom: center.zoom,
+        zoomControl: false,
+        layers: [baseTileLayers.dark]
+      });
+
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      networkLayer.addTo(map);
+      markersLayer.addTo(map);
+
+      map.on('zoomend', function() {
+        renderMapLayers();
+      });
+
+      map.on('click', function(e) {
+        var lat = e.latlng.lat.toFixed(6);
+        var lng = e.latlng.lng.toFixed(6);
+
+        document.getElementById('form-lat').value = lat;
+        document.getElementById('form-lng').value = lng;
+
+        if (tempClickMarker) {
+          map.removeLayer(tempClickMarker);
+        }
+
+        tempClickMarker = L.circleMarker(e.latlng, {
+          radius: 7,
+          fillColor: '#38bdf8',
+          color: '#ffffff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.9
+        }).addTo(map);
+
+        showToast('Koordinat dikunci: ' + lat + ', ' + lng, 'info');
+      });
+
+      map.on('mousemove', function(e) {
+        var el = document.getElementById('live-cursor-coords');
+        if (el) {
+          el.innerText = e.latlng.lat.toFixed(6) + ', ' + e.latlng.lng.toFixed(6);
+        }
+      });
+
+      map.on('moveend', function() {
+        map.invalidateSize({ animate: false });
+      });
+
+      var mapEl = document.getElementById('map');
+      if (mapEl && typeof ResizeObserver !== 'undefined') {
+        var ro = new ResizeObserver(function() {
+          if (map) map.invalidateSize({ animate: false });
+        });
+        ro.observe(mapEl);
+      }
+    };
+
+    function buildCurvedArcPoints(startLatLng, endLatLng, curveOffset) {
+      var lat1 = startLatLng[0], lng1 = startLatLng[1];
+      var lat2 = endLatLng[0], lng2 = endLatLng[1];
+      var midLat = (lat1 + lat2) / 2;
+      var midLng = (lng1 + lng2) / 2;
+      var dLat = lat2 - lat1;
+      var dLng = lng2 - lng1;
+
+      var ctrlLat = midLat - dLng * curveOffset;
+      var ctrlLng = midLng + dLat * curveOffset;
+
+      var points = [];
+      var steps = 36;
+      for (var t = 0; t <= steps; t++) {
+        var u = t / steps;
+        var inv = 1 - u;
+        var lat = inv * inv * lat1 + 2 * inv * u * ctrlLat + u * u * lat2;
+        var lng = inv * inv * lng1 + 2 * inv * u * ctrlLng + u * u * lng2;
+        points.push([lat, lng]);
+      }
+      return points;
+    }
+
+    function renderJakartaCommandNetwork(dataset) {
+      networkLayer.clearLayers();
+      var items = dataset || assessments;
+      var jkt = DEFAULT_WILAYAH_MAP.Jakarta;
+      if (!jkt) return;
+
+      var regionStats = {};
+      REGION_CODES.forEach(function(code) {
+        regionStats[code] = { total: 0, kritis: 0, moderat: 0 };
+      });
+      items.forEach(function(item) {
+        var w = String(getProp(item, 'WilayahKerja', 'wilayahKerja') || 'ITA');
+        var r = String(getProp(item, 'RiskLevel', 'riskLevel'));
+        if (!regionStats[w]) regionStats[w] = { total: 0, kritis: 0, moderat: 0 };
+        regionStats[w].total++;
+        if (r === 'Kritis') regionStats[w].kritis++;
+        if (r === 'Moderat') regionStats[w].moderat++;
+      });
+
+      var isSuperAdmin = currentUser && currentUser.role === 'SUPER ADMIN';
+      var targetCodes = isSuperAdmin
+        ? ['PGE', 'Tonga', 'ITA', 'Bentu', 'Siak', 'Kampar']
+        : (currentUser && currentUser.wilayahKerja !== 'Jakarta' ? [currentUser.wilayahKerja] : ['PGE', 'Tonga', 'ITA', 'Bentu', 'Siak', 'Kampar']);
+
+      var curveOffsets = {
+        PGE: -0.18,
+        Tonga: -0.14,
+        ITA: 0.16,
+        Bentu: 0.12,
+        Siak: -0.10,
+        Kampar: 0.20
+      };
+
+      targetCodes.forEach(function(code) {
+        var target = DEFAULT_WILAYAH_MAP[code];
+        if (!target) return;
+        var st = regionStats[code] || { total: 0, kritis: 0, moderat: 0 };
+
+        var neonColor = st.kritis > 0 ? '#f43f5e' : (st.moderat > 0 ? '#f59e0b' : '#38bdf8');
+        var arcPoints = buildCurvedArcPoints([jkt.lat, jkt.lng], [target.lat, target.lng], curveOffsets[code] || 0.15);
+
+        L.polyline(arcPoints, {
+          color: neonColor,
+          weight: 6,
+          opacity: 0.28,
+          className: 'neon-arc-glow',
+          interactive: false
+        }).addTo(networkLayer);
+
+        L.polyline(arcPoints, {
+          color: neonColor,
+          weight: 2.4,
+          opacity: 0.95,
+          className: 'neon-arc-line',
+          interactive: false
+        }).addTo(networkLayer);
+
+        if (map && map.getZoom() <= 10) {
+          var badgeBorder = st.kritis > 0 ? 'border-rose-400 shadow-rose-500/40' : (st.moderat > 0 ? 'border-amber-400 shadow-amber-500/40' : 'border-cyan-400 shadow-cyan-500/40');
+          var dotBg = st.kritis > 0 ? 'bg-rose-500' : (st.moderat > 0 ? 'bg-amber-400' : 'bg-cyan-400');
+
+          var nodeHtml = '<div class="relative flex flex-col items-center cursor-pointer group">' +
+            '<div class="relative w-7 h-7 flex items-center justify-center">' +
+              '<div class="radar-pulse ' + dotBg + ' opacity-60"></div>' +
+              '<div class="w-4 h-4 rounded-full ' + dotBg + ' border-2 border-white shadow-lg group-hover:scale-125 transition"></div>' +
+            '</div>' +
+            '<div class="mt-0.5 px-2 py-0.5 rounded-md bg-obsidian-950/95 border ' + badgeBorder + ' shadow-lg text-[10px] font-mono font-bold text-white whitespace-nowrap flex items-center space-x-1">' +
+              '<span>' + escapeHtml(code) + '</span>' +
+              '<span class="text-cyan-300">(' + st.total + ')</span>' +
+            '</div>' +
+          '</div>';
+
+          var nodeMarker = L.marker([target.lat, target.lng], {
+            icon: L.divIcon({ className: 'region-hub-node', html: nodeHtml, iconSize: [96, 46], iconAnchor: [48, 14] })
+          });
+
+          nodeMarker.on('click', function() {
+            if (isSuperAdmin) {
+              var sel = document.getElementById('filter-wilayah');
+              if (sel) sel.value = code;
+              activeWilayahScope = code;
+              loadServerAssessments(true);
+            }
+            map.flyTo([target.lat, target.lng], target.zoom || 14, { duration: 1.0 });
+          });
+
+          networkLayer.addLayer(nodeMarker);
+        }
+      });
+
+      var hqHtml = '<div class="relative flex flex-col items-center cursor-pointer group">' +
+        '<div class="relative w-11 h-11 flex items-center justify-center">' +
+          '<div class="radar-pulse bg-indigo-500 opacity-75"></div>' +
+          '<div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-600 border-2 border-cyan-200 shadow-2xl shadow-cyan-500/50 flex items-center justify-center group-hover:scale-110 transition">' +
+            '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mt-0.5 px-2.5 py-0.5 rounded-md bg-indigo-950/95 border border-cyan-400/70 shadow-xl text-[10px] font-mono font-extrabold text-cyan-200 whitespace-nowrap">' +
+          'PUSAT KOMANDO · JAKARTA HQ' +
+        '</div>' +
+      '</div>';
+
+      var hqMarker = L.marker([jkt.lat, jkt.lng], {
+        icon: L.divIcon({ className: 'jakarta-hq-hub', html: hqHtml, iconSize: [180, 56], iconAnchor: [90, 22] }),
+        zIndexOffset: 1000
+      });
+
+      hqMarker.on('click', function() {
+        map.flyTo([jkt.lat, jkt.lng], jkt.zoom || 15, { duration: 0.9 });
+      });
+
+      networkLayer.addLayer(hqMarker);
+    }
+
+    function renderRegionalAssessmentSpokes(dataset) {
+      var items = dataset || assessments;
+      if (!items || items.length === 0 || !map) return;
+
+      var currentZoom = map.getZoom();
+      if (currentZoom <= 8 && activeWilayahScope === 'ALL') {
+        return;
+      }
+
+      var groupedByRegion = {};
+      items.forEach(function(item) {
+        var wCode = String(getProp(item, 'WilayahKerja', 'wilayahKerja') || 'ITA').trim();
+        if (!groupedByRegion[wCode]) groupedByRegion[wCode] = [];
+        groupedByRegion[wCode].push(item);
+      });
+
+      Object.keys(groupedByRegion).forEach(function(wCode) {
+        var regionHub = DEFAULT_WILAYAH_MAP[wCode];
+        if (!regionHub || isNaN(regionHub.lat) || isNaN(regionHub.lng)) return;
+
+        var regionItems = groupedByRegion[wCode];
+        var hasCritical = false;
+        var hasModerat = false;
+
+        regionItems.forEach(function(item, idx) {
+          var lat = parseFloat(getProp(item, 'Latitude', 'lat'));
+          var lng = parseFloat(getProp(item, 'Longitude', 'lng'));
+          if (isNaN(lat) || isNaN(lng)) return;
+
+          var risk = String(getProp(item, 'RiskLevel', 'riskLevel'));
+          if (risk === 'Kritis') hasCritical = true;
+          if (risk === 'Moderat') hasModerat = true;
+
+          if (Math.abs(lat - regionHub.lat) < 0.0001 && Math.abs(lng - regionHub.lng) < 0.0001) {
+            return;
+          }
+
+          var spokeColor = risk === 'Kritis' ? '#f43f5e' : (risk === 'Moderat' ? '#f59e0b' : '#38bdf8');
+          var bend = ((idx % 2 === 0) ? 1 : -1) * (0.12 + (idx % 3) * 0.04);
+          var arcPoints = buildCurvedArcPoints([regionHub.lat, regionHub.lng], [lat, lng], bend);
+
+          L.polyline(arcPoints, {
+            color: spokeColor,
+            weight: 5,
+            opacity: 0.25,
+            className: 'neon-arc-glow',
+            interactive: false
+          }).addTo(networkLayer);
+
+          L.polyline(arcPoints, {
+            color: spokeColor,
+            weight: 2,
+            opacity: 0.9,
+            className: 'neon-arc-line',
+            interactive: false
+          }).addTo(networkLayer);
+        });
+
+        var hubBorder = hasCritical ? 'border-rose-400/80' : (hasModerat ? 'border-amber-400/80' : 'border-cyan-400/80');
+        var hubPulse = hasCritical ? 'bg-rose-500' : (hasModerat ? 'bg-amber-400' : 'bg-cyan-400');
+
+        var regionHubHtml = '<div class="relative flex flex-col items-center cursor-pointer group">' +
+          '<div class="relative w-10 h-10 flex items-center justify-center">' +
+            '<div class="radar-pulse ' + hubPulse + ' opacity-65"></div>' +
+            '<div class="w-8 h-8 rounded-xl bg-obsidian-950/95 border-2 ' + hubBorder + ' shadow-2xl flex items-center justify-center group-hover:scale-110 transition">' +
+              '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/></svg>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mt-0.5 px-2 py-0.5 rounded-md bg-obsidian-950/95 border ' + hubBorder + ' shadow-lg text-[9px] font-mono font-extrabold text-cyan-200 whitespace-nowrap">' +
+            'PUSAT ' + escapeHtml(wCode.toUpperCase()) + ' (' + regionItems.length + ')' +
+          '</div>' +
+        '</div>';
+
+        var regionHubMarker = L.marker([regionHub.lat, regionHub.lng], {
+          icon: L.divIcon({
+            className: 'wilayah-center-hub',
+            html: regionHubHtml,
+            iconSize: [130, 50],
+            iconAnchor: [65, 20]
+          }),
+          zIndexOffset: 900
+        });
+
+        regionHubMarker.on('click', function() {
+          map.flyTo([regionHub.lat, regionHub.lng], regionHub.zoom || 15, { duration: 0.8 });
+        });
+
+        networkLayer.addLayer(regionHubMarker);
+      });
+    }
+
+    function renderMapLayers(dataset) {
+      var items = dataset || assessments;
+      renderJakartaCommandNetwork(items);
+      renderRegionalAssessmentSpokes(items);
+      renderMarkers(items);
+    }
+
+    function renderMarkers(dataset) {
+      markersLayer.clearLayers();
+      markerRegistry = {};
+
+      var items = dataset || assessments;
+      var currentZoom = map ? map.getZoom() : 6;
+
+      if (currentZoom <= 8 && activeWilayahScope === 'ALL') {
+        return;
+      }
+
+      items.forEach(function(item) {
+        var id = getProp(item, 'ID', 'id');
+        var lat = parseFloat(getProp(item, 'Latitude', 'lat'));
+        var lng = parseFloat(getProp(item, 'Longitude', 'lng'));
+        var secType = getProp(item, 'SecurityType', 'securityType');
+        var risk = getProp(item, 'RiskLevel', 'riskLevel');
+
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        var isCritical = risk === 'Kritis';
+        var isStatis = secType === 'Statis';
+
+        var colorBg = isCritical
+          ? 'bg-gradient-to-tr from-rose-600 to-red-500 border-rose-200'
+          : (isStatis ? 'bg-gradient-to-tr from-cyan-600 to-blue-500 border-cyan-200' : 'bg-gradient-to-tr from-amber-500 to-yellow-400 border-amber-100');
+
+        var pulseBg = isCritical ? 'bg-rose-500' : (isStatis ? 'bg-cyan-400' : 'bg-amber-400');
+
+        var customHtml = '<div class="relative flex items-center justify-center w-9 h-9 cursor-pointer group">' +
+          '<div class="radar-pulse ' + pulseBg + ' opacity-75"></div>' +
+          '<div class="w-8 h-8 rounded-xl ' + colorBg + ' flex items-center justify-center shadow-xl border-2 transition-transform duration-200 group-hover:scale-110">' +
+            getSecurityMarkerSvg(secType, risk) +
+          '</div>' +
+        '</div>';
+
+        var icon = L.divIcon({
+          className: 'custom-pin',
+          html: customHtml,
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+          popupAnchor: [0, -18]
+        });
+
+        var marker = L.marker([lat, lng], { icon: icon });
+        marker.bindPopup(createPopupHtml(item), { maxWidth: 380 });
+        marker.on('popupopen', function() {
+          if (window.lucide) lucide.createIcons();
+          hydratePopupPhotos(item);
+        });
+
+        markersLayer.addLayer(marker);
+        if (id) {
+          markerRegistry[id] = marker;
+        }
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function hydratePopupPhotos(item) {
+      var id = getProp(item, 'ID', 'id');
+      var pThreat = getProp(item, 'PhotoThreatUrl', 'photoThreatUrl');
+      var pMitig = getProp(item, 'PhotoMitigationUrl', 'photoMitigationUrl');
+
+      resolvePhotoSrc(pThreat, function(src) {
+        var el = document.getElementById('popup-img-threat-' + id);
+        if (el && src) el.src = src;
+      });
+      resolvePhotoSrc(pMitig, function(src) {
+        var el = document.getElementById('popup-img-mitig-' + id);
+        if (el && src) el.src = src;
+      });
+    }
+
+    function resolvePhotoSrc(photoRef, callback) {
+      if (!photoRef) return callback('');
+      var ref = String(photoRef).trim();
+
+      if (!isGoogleDriveUrl(ref) && (ref.indexOf('https://') === 0 || ref.indexOf('data:image/') === 0)) {
+        return callback(safeUrl(ref));
+      }
+      if (photoCache[ref]) {
+        return callback(photoCache[ref]);
+      }
+      if (currentSessionToken) {
+        callGasApi('getPhoto', { photoRef: ref })
+          .then(function(res) {
+            if (res && res.success && res.dataUrl) {
+              photoCache[ref] = res.dataUrl;
+              callback(res.dataUrl);
+            }
+          })
+          .catch(function(err) {
+            console.warn('Gagal memuat foto Drive:', err);
+          });
+      }
+    }
+
+    function createPopupHtml(item) {
+      var id = escapeHtml(getProp(item, 'ID', 'id'));
+      var rawId = String(getProp(item, 'ID', 'id'));
+      var wilayah = escapeHtml(getProp(item, 'WilayahKerja', 'wilayahKerja') || 'ITA');
+      var areaName = escapeHtml(getProp(item, 'AreaName', 'areaName'));
+      var secType = escapeHtml(getProp(item, 'SecurityType', 'securityType'));
+      var risk = String(getProp(item, 'RiskLevel', 'riskLevel'));
+      var threat = escapeHtml(getProp(item, 'Threat', 'threat'));
+      var vuln = escapeHtml(getProp(item, 'Vulnerability', 'vulnerability'));
+      var mitig = escapeHtml(getProp(item, 'Mitigation', 'mitigation'));
+      var iso = escapeHtml(getProp(item, 'IsoImpact', 'isoImpact'));
+      var sop = escapeHtml(getProp(item, 'SopReference', 'sop', 'sopReference') || '-');
+      var lat = escapeHtml(getProp(item, 'Latitude', 'lat'));
+      var lng = escapeHtml(getProp(item, 'Longitude', 'lng'));
+
+      var pThreat = getProp(item, 'PhotoThreatUrl', 'photoThreatUrl');
+      var pMitig = getProp(item, 'PhotoMitigationUrl', 'photoMitigationUrl');
+      var initThreatSrc = (!isGoogleDriveUrl(pThreat) ? safeUrl(pThreat) : '') || 'https://via.placeholder.com/300x200/0b101e/38bdf8?text=Memuat+Foto...';
+      var initMitigSrc = (!isGoogleDriveUrl(pMitig) ? safeUrl(pMitig) : '') || 'https://via.placeholder.com/300x200/0b101e/34d399?text=Memuat+Foto...';
+
+      var riskBadge = risk === 'Kritis'
+        ? '<span class="bg-rose-500/20 text-rose-400 border border-rose-500/40 px-2 py-0.5 rounded-md text-[10px] font-bold">KRITIS</span>'
+        : (risk === 'Moderat'
+            ? '<span class="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded-md text-[10px] font-bold">MODERAT</span>'
+            : '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-md text-[10px] font-bold">RENDAH</span>');
+
+      var canDelete = currentUser && currentUser.role === 'SUPER ADMIN';
+      var deleteBtnHtml = canDelete
+        ? '<button data-id="' + id + '" onclick="deleteAssessment(this.getAttribute(\'data-id\'))" class="px-2.5 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded-lg border border-rose-800/50 font-semibold">Hapus</button>'
+        : '';
+
+      return '<div class="w-[260px] sm:w-80 text-slate-100 font-sans">' +
+        '<div class="p-3 bg-obsidian-950 border-b border-obsidian-800 flex justify-between items-start rounded-t-2xl">' +
+          '<div class="pr-4">' +
+            '<div class="flex items-center space-x-1.5">' +
+              '<span class="text-[10px] font-mono text-cyan-400 font-bold">' + id + '</span>' +
+              '<span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-mono">' + wilayah + '</span>' +
+            '</div>' +
+            '<h4 class="font-bold text-xs text-white leading-snug mt-1">' + areaName + '</h4>' +
+          '</div>' +
+          '<div class="flex flex-col items-end space-y-1 shrink-0">' +
+            riskBadge +
+            '<span class="text-[9px] px-1.5 py-0.5 rounded bg-obsidian-800 text-slate-300 font-mono">' + secType + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="p-3 space-y-2.5 text-xs">' +
+          '<div class="bg-rose-950/30 p-2.5 rounded-xl border border-rose-900/50">' +
+            '<div class="text-rose-400 font-bold text-[10px] mb-1">ANCAMAN & KERAWANAN</div>' +
+            '<p class="text-slate-200 text-[11px] leading-snug"><strong>Ancaman:</strong> ' + threat + '</p>' +
+            '<p class="text-slate-400 text-[10px] mt-1"><strong>Celah:</strong> ' + vuln + '</p>' +
+          '</div>' +
+          '<div class="bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-900/50">' +
+            '<div class="text-emerald-400 font-bold text-[10px] mb-1">MITIGASI & KESIAPAN ISO</div>' +
+            '<p class="text-slate-200 text-[11px] leading-snug"><strong>Mitigasi:</strong> ' + mitig + '</p>' +
+            '<div class="mt-1.5 flex justify-between items-center text-[10px] text-cyan-300 font-mono">' +
+              '<span>' + sop + '</span>' +
+              '<span>' + iso + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-2 pt-0.5">' +
+            '<div class="cursor-pointer" data-id="' + id + '" onclick="openAssessmentPhotoModal(this.getAttribute(\'data-id\'), \'threat\')">' +
+              '<span class="text-[9px] text-amber-300 font-semibold block mb-1">1. Foto Identifikasi:</span>' +
+              '<img id="popup-img-threat-' + escapeHtml(rawId) + '" src="' + initThreatSrc + '" class="h-16 w-full object-cover rounded-lg border border-obsidian-700 hover:border-amber-400 transition">' +
+            '</div>' +
+            '<div class="cursor-pointer" data-id="' + id + '" onclick="openAssessmentPhotoModal(this.getAttribute(\'data-id\'), \'mitig\')">' +
+              '<span class="text-[9px] text-emerald-300 font-semibold block mb-1">2. Foto Antisipasi:</span>' +
+              '<img id="popup-img-mitig-' + escapeHtml(rawId) + '" src="' + initMitigSrc + '" class="h-16 w-full object-cover rounded-lg border border-obsidian-700 hover:border-emerald-400 transition">' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="p-2.5 bg-obsidian-950 border-t border-obsidian-800 flex justify-between items-center text-[10px] rounded-b-2xl">' +
+          '<span class="text-slate-500 font-mono">' + lat + ', ' + lng + '</span>' +
+          '<div class="flex space-x-1.5">' +
+            '<button data-id="' + id + '" onclick="editAssessment(this.getAttribute(\'data-id\'))" class="px-2.5 py-1 bg-obsidian-800 hover:bg-obsidian-700 text-cyan-300 rounded-lg border border-obsidian-700 font-semibold">Edit</button>' +
+            deleteBtnHtml +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function renderSidebarList(dataset) {
+      try {
+        var container = document.getElementById('assessment-list');
+        var items = dataset || assessments;
+        var listCountEl = document.getElementById('list-count');
+        if (listCountEl) listCountEl.innerText = items.length + ' Titik';
+
+        if (items.length === 0) {
+          container.innerHTML = '<div class="p-8 text-center text-slate-500 text-xs bg-obsidian-950/50 rounded-xl border border-dashed border-obsidian-800">Belum ada titik kerawanan untuk filter ini. Klik <strong>Input Asesmen</strong> untuk menambah data.</div>';
+          return;
+        }
+
+        container.innerHTML = items.map(function(item) {
+          var id = escapeHtml(getProp(item, 'ID', 'id'));
+          var wilayah = escapeHtml(getProp(item, 'WilayahKerja', 'wilayahKerja') || 'ITA');
+          var areaName = escapeHtml(getProp(item, 'AreaName', 'areaName'));
+          var secType = escapeHtml(getProp(item, 'SecurityType', 'securityType'));
+          var risk = String(getProp(item, 'RiskLevel', 'riskLevel'));
+          var threat = escapeHtml(getProp(item, 'Threat', 'threat'));
+          var sector = escapeHtml(getProp(item, 'Sector', 'sector') || 'Umum');
+          var lat = parseFloat(getProp(item, 'Latitude', 'lat'));
+          var lng = parseFloat(getProp(item, 'Longitude', 'lng'));
+
+          var isCritical = risk === 'Kritis';
+          var isModerat = risk === 'Moderat';
+          var barColor = isCritical ? 'bg-rose-500' : (isModerat ? 'bg-amber-400' : 'bg-cyan-400');
+          var riskBadgeClass = isCritical
+            ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+            : (isModerat ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30');
+
+          return '<div data-id="' + id + '" data-lat="' + lat + '" data-lng="' + lng + '" onclick="focusToMarker(this.getAttribute(\'data-id\'), parseFloat(this.getAttribute(\'data-lat\')), parseFloat(this.getAttribute(\'data-lng\')))" class="relative overflow-hidden bg-obsidian-950/90 hover:bg-obsidian-850 pl-4 pr-3 py-2.5 rounded-xl border border-obsidian-800 hover:border-cyan-500/40 cursor-pointer transition space-y-1.5 group">' +
+            '<span class="absolute left-0 top-0 bottom-0 w-1 ' + barColor + '"></span>' +
+            '<div class="flex justify-between items-start gap-2">' +
+              '<div class="min-w-0">' +
+                '<div class="flex items-center space-x-1.5">' +
+                  '<span class="text-[10px] font-mono text-cyan-400 font-bold">' + id + '</span>' +
+                  '<span class="text-[9px] px-1.5 py-0.2 rounded bg-obsidian-900 text-slate-300 border border-obsidian-700 font-mono">' + wilayah + '</span>' +
+                '</div>' +
+                '<h5 class="text-xs font-bold text-white group-hover:text-cyan-300 transition mt-0.5 truncate">' + areaName + '</h5>' +
+              '</div>' +
+              '<span class="text-[9px] px-2 py-0.5 rounded-md font-bold shrink-0 ' + riskBadgeClass + '">' + escapeHtml(risk) + '</span>' +
+            '</div>' +
+            '<p class="text-[11px] text-slate-400 line-clamp-1">' + threat + '</p>' +
+            '<div class="flex justify-between items-center text-[10px] text-slate-500 pt-1 border-t border-obsidian-800/80">' +
+              '<span class="truncate max-w-[180px]">' + sector + '</span>' +
+              '<span class="font-mono font-semibold ' + (secType === 'Statis' ? 'text-cyan-400' : 'text-amber-400') + '">' + secType + '</span>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+
+        if (window.lucide) lucide.createIcons();
+      } catch (err) {
+        console.error('Error renderSidebarList:', err);
+      }
+    }
+
+    function renderRegionalTelemetryBars(dataset) {
+      var container = document.getElementById('regional-telemetry-bars');
+      if (!container) return;
+      var items = dataset || assessments;
+
+      var counts = {};
+      var maxCount = 1;
+      REGION_CODES.forEach(function(code) {
+        counts[code] = { total: 0, kritis: 0 };
+      });
+
+      items.forEach(function(item) {
+        var w = String(getProp(item, 'WilayahKerja', 'wilayahKerja') || 'ITA');
+        var r = String(getProp(item, 'RiskLevel', 'riskLevel'));
+        if (!counts[w]) counts[w] = { total: 0, kritis: 0 };
+        counts[w].total++;
+        if (r === 'Kritis') counts[w].kritis++;
+        if (counts[w].total > maxCount) maxCount = counts[w].total;
+      });
+
+      container.innerHTML = REGION_CODES.map(function(code) {
+        var c = counts[code] || { total: 0, kritis: 0 };
+        var pct = c.total === 0 ? 12 : Math.max(22, Math.round((c.total / maxCount) * 100));
+        var barGrad = c.kritis > 0
+          ? 'from-rose-600/80 to-rose-400'
+          : (c.total > 0 ? 'from-cyan-600/80 to-indigo-400' : 'from-obsidian-800 to-obsidian-700');
+
+        return '<div onclick="jumpToRegion(\'' + code + '\')" title="Klik untuk fokus ke wilayah ' + code + '" class="flex flex-col items-center justify-end h-full cursor-pointer group">' +
+          '<span class="text-[10px] font-mono font-bold text-slate-300 group-hover:text-cyan-300 mb-1">' + c.total + '</span>' +
+          '<div class="w-full max-w-[34px] bg-obsidian-950 rounded-t-lg border border-obsidian-800 h-14 flex items-end overflow-hidden p-0.5">' +
+            '<div style="height:' + pct + '%" class="w-full rounded-t bg-gradient-to-t ' + barGrad + ' transition-all duration-500"></div>' +
+          '</div>' +
+          '<span class="text-[9px] font-mono text-slate-400 group-hover:text-white mt-1">' + code + '</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    window.jumpToRegion = function(code) {
+      var target = DEFAULT_WILAYAH_MAP[code];
+      if (!target || !map) return;
+      var isSuperAdmin = currentUser && currentUser.role === 'SUPER ADMIN';
+      if (isSuperAdmin) {
+        var sel = document.getElementById('filter-wilayah');
+        if (sel) sel.value = code;
+        activeWilayahScope = code;
+        loadServerAssessments(true);
+      }
+      map.flyTo([target.lat, target.lng], target.zoom || 14, { duration: 0.9 });
+    };
+
+    window.showJakartaNetworkView = function() {
+      if (!map) return;
+      var isSuperAdmin = currentUser && currentUser.role === 'SUPER ADMIN';
+      if (isSuperAdmin) {
+        var sel = document.getElementById('filter-wilayah');
+        if (sel) sel.value = 'ALL';
+        activeWilayahScope = 'ALL';
+        loadServerAssessments(true);
+      }
+      var overview = DEFAULT_WILAYAH_MAP.ALL;
+      map.flyTo([overview.lat, overview.lng], overview.zoom, { duration: 0.9 });
+      showToast('Menampilkan jaringan komando Jakarta HQ ke seluruh wilayah.', 'info');
+    };
+
+    window.resetToOverviewNetwork = function() {
+      showJakartaNetworkView();
+    };
+
+    window.focusToMarker = function(id, lat, lng) {
+      if (isNaN(lat) || isNaN(lng) || !map) return;
+      map.flyTo([lat, lng], 16, { duration: 0.8 });
+
+      var triggerPopup = function() {
+        renderMarkers();
+        if (markerRegistry[id]) {
+          markerRegistry[id].openPopup();
+        }
+      };
+
+      map.once('moveend', triggerPopup);
+      setTimeout(triggerPopup, 850);
+    };
+
+    function updateKpiActiveHighlight(sysVal, riskVal) {
+      var activeKey = 'ALL';
+      if (riskVal === 'Kritis' && sysVal === 'ALL') activeKey = 'Kritis';
+      else if (riskVal === 'Moderat' && sysVal === 'ALL') activeKey = 'Moderat';
+      else if (sysVal === 'Statis' && riskVal === 'ALL') activeKey = 'Statis';
+      else if (sysVal === 'Mobile' && riskVal === 'ALL') activeKey = 'Mobile';
+      else if (sysVal !== 'ALL' || riskVal !== 'ALL') activeKey = '';
+
+      var allBtn = document.getElementById('kpi-card-ALL');
+      if (allBtn) {
+        allBtn.className = activeKey === 'ALL'
+          ? 'relative p-3 rounded-xl bg-obsidian-950 border border-cyan-500/60 ring-1 ring-cyan-500/40 flex flex-col items-center justify-between text-center transition cursor-pointer'
+          : 'relative p-3 rounded-xl bg-obsidian-950 border border-obsidian-800 hover:border-cyan-500/40 flex flex-col items-center justify-between text-center transition cursor-pointer';
+      }
+
+      ['Kritis', 'Moderat', 'Statis', 'Mobile'].forEach(function(k) {
+        var btn = document.getElementById('kpi-card-' + k);
+        if (!btn) return;
+        if (k === activeKey) {
+          btn.classList.add('ring-2', 'ring-white/60');
+        } else {
+          btn.classList.remove('ring-2', 'ring-white/60');
+        }
+      });
+    }
+
+    window.applyKpiFilter = function(mode) {
+      var sysSelect = document.getElementById('filter-system');
+      var riskSelect = document.getElementById('filter-risk');
+      if (!sysSelect || !riskSelect) return;
+
+      if (mode === 'ALL') {
+        sysSelect.value = 'ALL';
+        riskSelect.value = 'ALL';
+      } else if (mode === 'Kritis' || mode === 'Moderat') {
+        sysSelect.value = 'ALL';
+        riskSelect.value = mode;
+      } else if (mode === 'Statis' || mode === 'Mobile') {
+        sysSelect.value = mode;
+        riskSelect.value = 'ALL';
+      }
+
+      filterAssessments();
+    };
+
+    window.filterAssessments = function() {
+      var search = document.getElementById('search-input').value.toLowerCase();
+      var sys = document.getElementById('filter-system').value;
+      var risk = document.getElementById('filter-risk').value;
+
+      updateKpiActiveHighlight(sys, risk);
+
+      var filtered = assessments.filter(function(item) {
+        var aName = String(getProp(item, 'AreaName', 'areaName')).toLowerCase();
+        var aThreat = String(getProp(item, 'Threat', 'threat')).toLowerCase();
+        var aMitig = String(getProp(item, 'Mitigation', 'mitigation')).toLowerCase();
+        var aSec = String(getProp(item, 'Sector', 'sector')).toLowerCase();
+        var aWil = String(getProp(item, 'WilayahKerja', 'wilayahKerja')).toLowerCase();
+        var aSop = String(getProp(item, 'SopReference', 'sop', 'sopReference')).toLowerCase();
+        var secType = getProp(item, 'SecurityType', 'securityType');
+        var riskLvl = getProp(item, 'RiskLevel', 'riskLevel');
+
+        var matchSearch = aName.indexOf(search) !== -1 || aThreat.indexOf(search) !== -1 || aMitig.indexOf(search) !== -1 || aSec.indexOf(search) !== -1 || aWil.indexOf(search) !== -1 || aSop.indexOf(search) !== -1;
+        var matchSys = (sys === 'ALL') || (secType === sys);
+        var matchRisk = (risk === 'ALL') || (riskLvl === risk);
+        return matchSearch && matchSys && matchRisk;
+      });
+
+      renderMapLayers(filtered);
+      renderSidebarList(filtered);
+    };
+
+    function updateMetrics() {
+      var total = assessments.length;
+      var statis = assessments.filter(function(a) { return getProp(a, 'SecurityType', 'securityType') === 'Statis'; }).length;
+      var mobile = assessments.filter(function(a) { return getProp(a, 'SecurityType', 'securityType') === 'Mobile'; }).length;
+      var critical = assessments.filter(function(a) { return getProp(a, 'RiskLevel', 'riskLevel') === 'Kritis'; }).length;
+      var moderat = assessments.filter(function(a) { return getProp(a, 'RiskLevel', 'riskLevel') === 'Moderat'; }).length;
+      var rendah = assessments.filter(function(a) { return getProp(a, 'RiskLevel', 'riskLevel') === 'Rendah'; }).length;
+
+      document.getElementById('stat-total').innerText = total;
+      document.getElementById('stat-statis').innerText = statis;
+      document.getElementById('stat-mobile').innerText = mobile;
+      document.getElementById('stat-critical').innerText = critical;
+      var modEl = document.getElementById('stat-moderat');
+      if (modEl) modEl.innerText = moderat;
+
+      var segKritis = document.getElementById('gauge-seg-kritis');
+      var segModerat = document.getElementById('gauge-seg-moderat');
+      var segRendah = document.getElementById('gauge-seg-rendah');
+
+      if (segKritis && segModerat && segRendah) {
+        if (total === 0) {
+          window.donutBreakdown = {
+            Kritis: { count: 0, pct: 0 },
+            Moderat: { count: 0, pct: 0 },
+            Rendah: { count: 0, pct: 0 }
+          };
+          segKritis.setAttribute('stroke-dasharray', '0, 100');
+          segModerat.setAttribute('stroke-dasharray', '0, 100');
+          segRendah.setAttribute('stroke-dasharray', '0, 100');
+        } else {
+          var pctKritis = (critical / total) * 100;
+          var pctModerat = (moderat / total) * 100;
+          var pctRendah = Math.max(0, 100 - pctKritis - pctModerat);
+
+          window.donutBreakdown = {
+            Kritis: { count: critical, pct: Math.round(pctKritis) },
+            Moderat: { count: moderat, pct: Math.round(pctModerat) },
+            Rendah: { count: rendah, pct: Math.round(pctRendah) }
+          };
+
+          segKritis.setAttribute('stroke-dasharray', pctKritis.toFixed(2) + ', 100');
+          segKritis.setAttribute('stroke-dashoffset', '0');
+
+          segModerat.setAttribute('stroke-dasharray', pctModerat.toFixed(2) + ', 100');
+          segModerat.setAttribute('stroke-dashoffset', (-pctKritis).toFixed(2));
+
+          segRendah.setAttribute('stroke-dasharray', pctRendah.toFixed(2) + ', 100');
+          segRendah.setAttribute('stroke-dashoffset', (-(pctKritis + pctModerat)).toFixed(2));
+
+          var tK = document.getElementById('title-seg-kritis');
+          var tM = document.getElementById('title-seg-moderat');
+          var tR = document.getElementById('title-seg-rendah');
+          if (tK) tK.textContent = 'Kritis: ' + Math.round(pctKritis) + '% (' + critical + ' titik)';
+          if (tM) tM.textContent = 'Moderat: ' + Math.round(pctModerat) + '% (' + moderat + ' titik)';
+          if (tR) tR.textContent = 'Rendah: ' + Math.round(pctRendah) + '% (' + rendah + ' titik)';
+        }
+      }
+    }
+
+    window.showDonutTooltip = function(category, el) {
+      var tip = document.getElementById('donut-hover-tooltip');
+      if (!tip) return;
+      var info = (window.donutBreakdown && window.donutBreakdown[category]) || { count: 0, pct: 0 };
+
+      var colorMap = {
+        Kritis: 'border-rose-500/70 text-rose-300',
+        Moderat: 'border-amber-500/70 text-amber-300',
+        Rendah: 'border-cyan-500/70 text-cyan-300'
+      };
+
+      tip.className = 'pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 z-30 px-2.5 py-1 rounded-lg bg-obsidian-900 border shadow-xl text-[10px] font-mono font-bold whitespace-nowrap ' + (colorMap[category] || 'border-cyan-500/50 text-white');
+      tip.innerText = category + ': ' + info.pct + '% (' + info.count + ')';
+
+      if (el && el.setAttribute) {
+        el.setAttribute('stroke-width', '4.8');
+      }
+    };
+
+    window.hideDonutTooltip = function(el) {
+      var tip = document.getElementById('donut-hover-tooltip');
+      if (tip) tip.classList.add('hidden');
+      if (el && el.setAttribute) {
+        el.setAttribute('stroke-width', '3.8');
+      }
+    };
+
+    window.openLoginModal = function() {
+      var modal = document.getElementById('modal-login');
+      if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeLoginModal = function() {
+      var modal = document.getElementById('modal-login');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.togglePasswordVisibility = function() {
+      var pass = document.getElementById('login-password');
+      if (pass) pass.type = pass.type === 'password' ? 'text' : 'password';
+    };
+
+    window.handleLoginSubmit = function(e) {
+      if (e) e.preventDefault();
+      var u = document.getElementById('login-username').value.trim();
+      var p = document.getElementById('login-password').value;
+      var btn = document.getElementById('btn-login-submit');
+
+      if (btn) btn.disabled = true;
+      showProcessModal('loading', 'Memverifikasi Autentikasi', 'Menghubungkan ke server API Google Apps Script...');
+
+      callGasApi('login', { username: u, password: p })
+        .then(function(res) {
+          if (btn) btn.disabled = false;
+          if (res && res.success) {
+            currentUser = res.user;
+            currentSessionToken = res.sessionToken;
+            if (Array.isArray(res.wilayahList)) {
+              res.wilayahList.forEach(function(w) {
+                DEFAULT_WILAYAH_MAP[w.code] = w;
+              });
+            }
+            saveSessionToStorage(currentSessionToken, currentUser, DEFAULT_WILAYAH_MAP);
+            applyUserRoleScopeUI();
+            enterApplication(true);
+            showProcessModal(
+              'success',
+              'Autentikasi Berhasil',
+              'Selamat datang, ' + currentUser.fullName + ' (' + (currentUser.role === 'SUPER ADMIN' ? 'SUPER ADMIN · ALL WILAYAH' : 'WILAYAH ' + currentUser.wilayahKerja) + ').'
+            );
+          } else {
+            showProcessModal('error', 'Login Gagal', (res && res.message) || 'Username atau kata sandi tidak valid.');
+          }
+        })
+        .catch(function(err) {
+          if (btn) btn.disabled = false;
+          showProcessModal('error', 'Koneksi API Gagal', err.message || 'Gagal terhubung ke server.');
+        });
+    };
+
+    function applyUserRoleScopeUI() {
+      var isSuperAdmin = currentUser && currentUser.role === 'SUPER ADMIN';
+      var userWilayah = currentUser ? currentUser.wilayahKerja : 'ITA';
+      activeWilayahScope = isSuperAdmin ? 'ALL' : userWilayah;
+
+      var badgeEl = document.getElementById('header-wilayah-badge');
+      var userEl = document.getElementById('header-user-badge');
+      var roleSubEl = document.getElementById('header-role-sub');
+      var filterWilayahEl = document.getElementById('filter-wilayah');
+      var formWilayahEl = document.getElementById('form-wilayah');
+      var userMgmtBtn = document.getElementById('btn-user-mgmt');
+
+      if (badgeEl) {
+        badgeEl.innerText = isSuperAdmin ? 'SUPER ADMIN · ALL WILAYAH' : ('WILAYAH ' + userWilayah.toUpperCase() + ' OPERATIONAL');
+      }
+      if (userEl && currentUser) {
+        userEl.innerText = currentUser.fullName;
+      }
+      if (roleSubEl && currentUser) {
+        roleSubEl.innerText = isSuperAdmin ? 'JAKARTA HQ COMMAND' : ('PIC · ' + userWilayah.toUpperCase());
+      }
+      if (filterWilayahEl) {
+        filterWilayahEl.value = activeWilayahScope;
+        filterWilayahEl.disabled = !isSuperAdmin;
+      }
+      if (formWilayahEl) {
+        formWilayahEl.value = isSuperAdmin ? 'ITA' : userWilayah;
+        formWilayahEl.disabled = !isSuperAdmin;
+      }
+      if (userMgmtBtn) {
+        if (isSuperAdmin) {
+          userMgmtBtn.classList.remove('hidden');
+        } else {
+          userMgmtBtn.classList.add('hidden');
+        }
+      }
+    }
+
+    window.handleWilayahFilterChange = function() {
+      if (!currentUser || currentUser.role !== 'SUPER ADMIN') return;
+      activeWilayahScope = document.getElementById('filter-wilayah').value;
+      resetToActiveWilayahCenter();
+      loadServerAssessments();
+    };
+
+    window.enterApplication = function(skipLoadModal) {
+      closeLoginModal();
+      document.getElementById('login-password').value = '';
+      document.getElementById('view-landing').classList.add('hidden');
+      document.getElementById('view-app').classList.remove('hidden');
+
+      initMap();
+      var center = getActiveCenter();
+      setTimeout(function() {
+        if (map) {
+          map.invalidateSize();
+          map.setView([center.lat, center.lng], center.zoom, { animate: true });
+          var lbl = document.getElementById('footer-map-label');
+          if (lbl) lbl.innerText = 'Pusat: ' + center.name;
+        }
+      }, 200);
+
+      loadServerAssessments(skipLoadModal);
+    };
+
+    window.handleLogout = function() {
+      showProcessModal('loading', 'Mengakhiri Sesi', 'Sedang membersihkan token sesi dan keluar dari portal...');
+      var finishLogout = function() {
+        clearSavedSession();
+        currentUser = null;
+        currentSessionToken = null;
+        assessments = [];
+        photoCache = {};
+        document.getElementById('view-app').classList.add('hidden');
+        document.getElementById('view-landing').classList.remove('hidden');
+        showProcessModal('success', 'Logout Berhasil', 'Sesi Anda telah diakhiri dengan aman.');
+      };
+
+      if (currentSessionToken) {
+        callGasApi('logout', {}).then(finishLogout).catch(finishLogout);
+      } else {
+        finishLogout();
+      }
+    };
+
+    window.setBaseMap = function(type) {
+      if (!map || currentTileType === type) return;
+      map.removeLayer(baseTileLayers[currentTileType]);
+      map.addLayer(baseTileLayers[type]);
+      currentTileType = type;
+      map.invalidateSize({ animate: false });
+
+      ['dark', 'sat', 'osm'].forEach(function(k) {
+        var btn = document.getElementById('btn-map-' + k);
+        if (btn) btn.className = 'px-2 py-1 rounded-md text-[10px] font-semibold text-slate-400 hover:text-white transition';
+      });
+      var activeBtn = document.getElementById('btn-map-' + (type === 'satellite' ? 'sat' : type));
+      if (activeBtn) {
+        activeBtn.className = 'px-2 py-1 rounded-md text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition';
+      }
+    };
+
+    window.resetToActiveWilayahCenter = function() {
+      if (map) {
+        var center = getActiveCenter();
+        map.invalidateSize();
+        map.setView([center.lat, center.lng], center.zoom, { animate: true });
+        var lbl = document.getElementById('footer-map-label');
+        if (lbl) lbl.innerText = 'Pusat: ' + center.name;
+      }
+    };
+
+    function loadServerAssessments(silentLoading) {
+      if (!currentSessionToken) return;
+      if (!silentLoading) {
+        showProcessModal('loading', 'Sinkronisasi Data Wilayah', 'Sedang memuat data titik kerawanan dan menyelaraskan jaringan Jakarta HQ...');
+      }
+
+      callGasApi('getAssessments', { requestedWilayah: activeWilayahScope })
+        .then(function(res) {
+          if (!silentLoading) closeProcessModal();
+          if (res && res.success) {
+            assessments = Array.isArray(res.data) ? res.data : [];
+            renderMapLayers();
+            renderSidebarList();
+            renderRegionalTelemetryBars();
+            updateMetrics();
+          } else {
+            showProcessModal('error', 'Gagal Memuat Data', (res && res.message) || 'Tidak dapat memuat data.');
+            if (res && res.sessionExpired) handleLogout();
+          }
+        })
+        .catch(function(err) {
+          showProcessModal('error', 'Kesalahan Jaringan', err.message || 'Terjadi kesalahan saat menghubungi server.');
+        });
+    }
+
+    window.toggleAssessmentDrawer = function(isEdit) {
+      var drawer = document.getElementById('assessment-drawer');
+      var isClosed = drawer.classList.contains('translate-x-full');
+
+      if (isClosed) {
+        if (!isEdit) {
+          resetAssessmentForm();
+          document.getElementById('drawer-title').innerText = 'Input Asesmen Kerawanan Security';
+        }
+        drawer.classList.remove('translate-x-full');
+      } else {
+        drawer.classList.add('translate-x-full');
+        if (tempClickMarker) {
+          map.removeLayer(tempClickMarker);
+          tempClickMarker = null;
+        }
+      }
+    };
+
+    window.onFormWilayahChange = function() {
+      setFormWilayahDefaultCoords();
+      var wCode = document.getElementById('form-wilayah').value;
+      document.getElementById('drawer-subtitle').innerText = 'Wilayah Kerja: ' + wCode;
+    };
+
+    window.setFormWilayahDefaultCoords = function() {
+      var wCode = document.getElementById('form-wilayah').value;
+      var wObj = DEFAULT_WILAYAH_MAP[wCode] || DEFAULT_WILAYAH_MAP.ITA;
+      document.getElementById('form-lat').value = wObj.lat;
+      document.getElementById('form-lng').value = wObj.lng;
+      showToast('Titik koordinat diatur ke pusat ' + wObj.name, 'info');
+    };
+
+    function resetAssessmentForm() {
+      var isSuperAdmin = currentUser && currentUser.role === 'SUPER ADMIN';
+      var defaultWilayah = isSuperAdmin
+        ? (activeWilayahScope !== 'ALL' ? activeWilayahScope : 'ITA')
+        : (currentUser ? currentUser.wilayahKerja : 'ITA');
+      var wObj = DEFAULT_WILAYAH_MAP[defaultWilayah] || DEFAULT_WILAYAH_MAP.ITA;
+
+      document.getElementById('form-id').value = '';
+      document.getElementById('form-wilayah').value = defaultWilayah;
+      document.getElementById('form-wilayah').disabled = !isSuperAdmin;
+      document.getElementById('drawer-subtitle').innerText = 'Wilayah Kerja: ' + defaultWilayah;
+
+      document.getElementById('form-area-name').value = '';
+      document.getElementById('form-sector').value = 'Zona Terbatas (Perimeter Utama)';
+      document.getElementById('form-security-type').value = 'Statis';
+      document.getElementById('form-lat').value = wObj.lat;
+      document.getElementById('form-lng').value = wObj.lng;
+      document.getElementById('form-threat').value = '';
+      document.getElementById('form-vulnerability').value = '';
+      document.getElementById('form-risk-level').value = 'Kritis';
+      document.getElementById('form-iso-impact').value = 'ISO 45001 (K3 & Keselamatan Fisik)';
+      document.getElementById('form-mitigation').value = '';
+      document.getElementById('form-sop').value = '';
+      document.getElementById('form-file-threat').value = '';
+      document.getElementById('form-url-threat').value = '';
+      document.getElementById('data-threat-base64').value = '';
+      document.getElementById('form-file-mitigation').value = '';
+      document.getElementById('form-url-mitigation').value = '';
+      document.getElementById('data-mitigation-base64').value = '';
+      document.getElementById('container-preview-threat').classList.add('hidden');
+      document.getElementById('container-preview-mitigation').classList.add('hidden');
+    }
+
+    /**
+     * Kompresi otomatis gambar di browser sebelum dikonversi ke Base64
+     */
+    window.handleFileChange = function(input, targetImgId, targetHiddenId) {
+      if (!input.files || !input.files[0]) return;
+      var file = input.files[0];
+      if (!file.type.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
+        showProcessModal('error', 'Format File Tidak Didukung', 'Gunakan gambar berformat JPG, PNG, atau WEBP.');
+        input.value = '';
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          var maxDim = 1280;
+          var width = img.width;
+          var height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          var canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          var compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          document.getElementById(targetImgId).src = compressedDataUrl;
+          document.getElementById(targetHiddenId).value = compressedDataUrl;
+          document.getElementById('container-' + targetImgId).classList.remove('hidden');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.handleAssessmentSubmit = function(e) {
+      if (e) e.preventDefault();
+      if (!currentSessionToken) {
+        showProcessModal('error', 'Sesi Berakhir', 'Silakan login kembali.');
+        return;
+      }
+
+      var btn = document.getElementById('btn-save-assessment');
+      var id = document.getElementById('form-id').value;
+      var formData = {
+        id: id,
+        wilayahKerja: document.getElementById('form-wilayah').value,
+        areaName: document.getElementById('form-area-name').value.trim(),
+        sector: document.getElementById('form-sector').value,
+        securityType: document.getElementById('form-security-type').value,
+        lat: parseFloat(document.getElementById('form-lat').value),
+        lng: parseFloat(document.getElementById('form-lng').value),
+        threat: document.getElementById('form-threat').value.trim(),
+        vulnerability: document.getElementById('form-vulnerability').value.trim(),
+        riskLevel: document.getElementById('form-risk-level').value,
+        isoImpact: document.getElementById('form-iso-impact').value,
+        mitigation: document.getElementById('form-mitigation').value.trim(),
+        sop: document.getElementById('form-sop').value.trim(),
+        photoThreatUrl: document.getElementById('form-url-threat').value.trim(),
+        photoThreatBase64: document.getElementById('data-threat-base64').value,
+        photoMitigationUrl: document.getElementById('form-url-mitigation').value.trim(),
+        photoMitigationBase64: document.getElementById('data-mitigation-base64').value
+      };
+
+      if (btn) btn.disabled = true;
+      showProcessModal(
+        'loading',
+        id ? 'Memperbarui Data Asesmen' : 'Menyimpan Data Asesmen',
+        'Sedang menyimpan rekaman ke Google Sheets dan mengunggah foto ke Google Drive...'
+      );
+
+      callGasApi('saveAssessment', { formData: formData })
+        .then(function(res) {
+          if (btn) btn.disabled = false;
+          if (res && res.success) {
+            toggleAssessmentDrawer();
+            showProcessModal(
+              'success',
+              id ? 'Pembaruan Berhasil' : 'Asesmen Tersimpan',
+              res.message,
+              function() { loadServerAssessments(true); }
+            );
+          } else {
+            showProcessModal('error', 'Gagal Menyimpan Data', (res && res.message) || 'Terjadi kesalahan saat menyimpan data.');
+          }
+        })
+        .catch(function(err) {
+          if (btn) btn.disabled = false;
+          showProcessModal('error', 'Kesalahan Server', err.message || 'Gagal menghubungi server.');
+        });
+    };
+
+    window.editAssessment = function(id) {
+      var item = null;
+      for (var i = 0; i < assessments.length; i++) {
+        if (getProp(assessments[i], 'ID', 'id') === id) { item = assessments[i]; break; }
+      }
+      if (!item) return;
+
+      var isSuperAdmin = currentUser && currentUser.role === 'SUPER ADMIN';
+      var itemWilayah = getProp(item, 'WilayahKerja', 'wilayahKerja') || 'ITA';
+
+      document.getElementById('form-id').value = getProp(item, 'ID', 'id');
+      document.getElementById('form-wilayah').value = itemWilayah;
+      document.getElementById('form-wilayah').disabled = !isSuperAdmin;
+      document.getElementById('drawer-subtitle').innerText = 'Wilayah Kerja: ' + itemWilayah;
+
+      document.getElementById('form-area-name').value = getProp(item, 'AreaName', 'areaName');
+      document.getElementById('form-sector').value = getProp(item, 'Sector', 'sector');
+      document.getElementById('form-security-type').value = getProp(item, 'SecurityType', 'securityType');
+      document.getElementById('form-lat').value = getProp(item, 'Latitude', 'lat');
+      document.getElementById('form-lng').value = getProp(item, 'Longitude', 'lng');
+      document.getElementById('form-threat').value = getProp(item, 'Threat', 'threat');
+      document.getElementById('form-vulnerability').value = getProp(item, 'Vulnerability', 'vulnerability');
+      document.getElementById('form-risk-level').value = getProp(item, 'RiskLevel', 'riskLevel');
+      document.getElementById('form-iso-impact').value = getProp(item, 'IsoImpact', 'isoImpact');
+      document.getElementById('form-mitigation').value = getProp(item, 'Mitigation', 'mitigation');
+      document.getElementById('form-sop').value = getProp(item, 'SopReference', 'sop', 'sopReference') || '';
+      document.getElementById('form-url-threat').value = getProp(item, 'PhotoThreatUrl', 'photoThreatUrl') || '';
+      document.getElementById('form-url-mitigation').value = getProp(item, 'PhotoMitigationUrl', 'photoMitigationUrl') || '';
+      document.getElementById('data-threat-base64').value = '';
+      document.getElementById('data-mitigation-base64').value = '';
+
+      document.getElementById('container-preview-threat').classList.add('hidden');
+      document.getElementById('container-preview-mitigation').classList.add('hidden');
+
+      var pThreat = getProp(item, 'PhotoThreatUrl', 'photoThreatUrl');
+      if (pThreat) {
+        resolvePhotoSrc(pThreat, function(src) {
+          if (src) {
+            document.getElementById('preview-threat').src = src;
+            document.getElementById('container-preview-threat').classList.remove('hidden');
+          }
+        });
+      }
+      var pMitig = getProp(item, 'PhotoMitigationUrl', 'photoMitigationUrl');
+      if (pMitig) {
+        resolvePhotoSrc(pMitig, function(src) {
+          if (src) {
+            document.getElementById('preview-mitigation').src = src;
+            document.getElementById('container-preview-mitigation').classList.remove('hidden');
+          }
+        });
+      }
+
+      document.getElementById('drawer-title').innerText = 'Edit Asesmen: ' + id;
+      toggleAssessmentDrawer(true);
+    };
+
+    window.deleteAssessment = function(id) {
+      if (!currentUser || currentUser.role !== 'SUPER ADMIN') {
+        showProcessModal('error', 'Akses Ditolak', 'Hanya Super Admin yang dapat menghapus data asesmen.');
+        return;
+      }
+      if (confirm('Apakah Anda yakin ingin menghapus data asesmen ' + id + ' dari sistem?')) {
+        showProcessModal('loading', 'Menghapus Data Asesmen', 'Sedang menghapus rekaman ' + id + ' dari database...');
+        callGasApi('deleteAssessment', { id: id })
+          .then(function(res) {
+            if (res && res.success) {
+              showProcessModal('success', 'Data Berhasil Dihapus', res.message, function() {
+                loadServerAssessments(true);
+              });
+            } else {
+              showProcessModal('error', 'Gagal Menghapus Data', (res && res.message) || 'Data tidak dapat dihapus.');
+            }
+          })
+          .catch(function(err) {
+            showProcessModal('error', 'Kesalahan Server', err.message || 'Gagal menghubungi server.');
+          });
+      }
+    };
+
+    window.openAssessmentPhotoModal = function(id, kind) {
+      var item = null;
+      for (var i = 0; i < assessments.length; i++) {
+        if (getProp(assessments[i], 'ID', 'id') === id) { item = assessments[i]; break; }
+      }
+      if (!item) return;
+      var areaName = getProp(item, 'AreaName', 'areaName');
+      var ref = kind === 'threat'
+        ? getProp(item, 'PhotoThreatUrl', 'photoThreatUrl')
+        : getProp(item, 'PhotoMitigationUrl', 'photoMitigationUrl');
+      var label = (kind === 'threat' ? 'Foto Identifikasi - ' : 'Foto Antisipasi - ') + areaName;
+
+      resolvePhotoSrc(ref, function(src) {
+        if (src) openImageViewer(src, label);
+      });
+    };
+
+    /* ==================== KELOLA AKUN (SUPER ADMIN) ==================== */
+    window.openUserMgmtModal = function() {
+      if (!currentUser || currentUser.role !== 'SUPER ADMIN') return;
+      document.getElementById('modal-users').classList.remove('hidden');
+      loadUsersTable();
+      if (window.lucide) lucide.createIcons();
+    };
+
+    window.closeUserMgmtModal = function() {
+      document.getElementById('modal-users').classList.add('hidden');
+    };
+
+    window.onNewUserRoleChange = function() {
+      var role = document.getElementById('new-user-role').value;
+      var wilEl = document.getElementById('new-user-wilayah');
+      if (wilEl) {
+        wilEl.disabled = (role === 'SUPER ADMIN');
+      }
+    };
+
+    function loadUsersTable() {
+      var tbody = document.getElementById('users-table-body');
+      if (!tbody || !currentSessionToken) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Memuat daftar pengguna...</td></tr>';
+
+      callGasApi('getUsers', {})
+        .then(function(res) {
+          var users = (res && res.data) || [];
+          if (!res || !res.success || users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">Tidak ada data pengguna.</td></tr>';
+            return;
+          }
+          tbody.innerHTML = users.map(function(u) {
+            var uid = escapeHtml(u.id);
+            var uname = escapeHtml(u.username);
+            var fname = escapeHtml(u.fullName);
+            var role = escapeHtml(u.role);
+            var wil = escapeHtml(u.wilayahKerja);
+            var isSelf = currentUser && u.username.toLowerCase() === currentUser.username.toLowerCase();
+
+            var deleteBtn = isSelf
+              ? '<span class="text-[10px] text-slate-500 italic px-2">Akun Aktif</span>'
+              : '<button data-id="' + uid + '" data-username="' + uname + '" onclick="confirmDeleteUser(this.getAttribute(\'data-id\'), this.getAttribute(\'data-username\'))" class="px-2.5 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded-lg border border-rose-800/50 text-[11px] font-semibold">Hapus</button>';
+
+            return '<tr class="hover:bg-obsidian-800/60">' +
+              '<td class="p-3 font-mono text-cyan-400 font-bold">' + uid + '</td>' +
+              '<td class="p-3 font-mono font-bold text-white">' + uname + '</td>' +
+              '<td class="p-3">' + fname + '</td>' +
+              '<td class="p-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold ' + (u.role === 'SUPER ADMIN' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30') + '">' + role + '</span></td>' +
+              '<td class="p-3 font-mono font-semibold">' + wil + '</td>' +
+              '<td class="p-3 text-right space-x-1.5">' +
+                '<button data-id="' + uid + '" data-username="' + uname + '" onclick="openResetPasswordModal(this.getAttribute(\'data-id\'), this.getAttribute(\'data-username\'))" class="px-2.5 py-1 bg-amber-950/60 hover:bg-amber-900 text-amber-300 rounded-lg border border-amber-800/50 text-[11px] font-semibold">Reset Password</button>' +
+                deleteBtn +
+              '</td>' +
+            '</tr>';
+          }).join('');
+        })
+        .catch(function(err) {
+          tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-rose-400">' + escapeHtml(err.message) + '</td></tr>';
+        });
+    }
+
+    window.handleCreateUserSubmit = function(e) {
+      if (e) e.preventDefault();
+      var btn = document.getElementById('btn-create-user');
+      var payload = {
+        username: document.getElementById('new-user-username').value.trim(),
+        fullName: document.getElementById('new-user-fullname').value.trim(),
+        password: document.getElementById('new-user-password').value,
+        role: document.getElementById('new-user-role').value,
+        wilayahKerja: document.getElementById('new-user-wilayah').value
+      };
+
+      if (btn) btn.disabled = true;
+      showProcessModal('loading', 'Membuat Akun Pengguna', 'Sedang mengenkripsi password dan menyimpan akun "' + payload.username + '"...');
+      callGasApi('createUser', { payload: payload })
+        .then(function(res) {
+          if (btn) btn.disabled = false;
+          if (res && res.success) {
+            document.getElementById('new-user-username').value = '';
+            document.getElementById('new-user-fullname').value = '';
+            document.getElementById('new-user-password').value = '';
+            showProcessModal('success', 'Akun Berhasil Dibuat', res.message, function() {
+              loadUsersTable();
+            });
+          } else {
+            showProcessModal('error', 'Gagal Membuat Akun', (res && res.message) || 'Tidak dapat menambahkan akun baru.');
+          }
+        })
+        .catch(function(err) {
+          if (btn) btn.disabled = false;
+          showProcessModal('error', 'Kesalahan Server', err.message || 'Gagal menghubungi server.');
+        });
+    };
+
+    window.openResetPasswordModal = function(userId, username) {
+      document.getElementById('reset-target-user-id').value = userId;
+      document.getElementById('reset-target-username').innerText = username;
+      document.getElementById('reset-new-password').value = '';
+      document.getElementById('modal-reset-password').classList.remove('hidden');
+    };
+
+    window.closeResetPasswordModal = function() {
+      document.getElementById('modal-reset-password').classList.add('hidden');
+    };
+
+    window.handleResetPasswordSubmit = function(e) {
+      if (e) e.preventDefault();
+      var btn = document.getElementById('btn-submit-reset-pass');
+      var userId = document.getElementById('reset-target-user-id').value;
+      var targetUname = document.getElementById('reset-target-username').innerText;
+      var newPass = document.getElementById('reset-new-password').value;
+
+      if (btn) btn.disabled = true;
+      showProcessModal('loading', 'Memperbarui Kata Sandi', 'Sedang mengenkripsi dan menyimpan password baru untuk "' + targetUname + '"...');
+      callGasApi('resetPassword', { targetUserId: userId, newPassword: newPass })
+        .then(function(res) {
+          if (btn) btn.disabled = false;
+          if (res && res.success) {
+            closeResetPasswordModal();
+            showProcessModal('success', 'Password Berhasil Diubah', res.message);
+          } else {
+            showProcessModal('error', 'Gagal Reset Password', (res && res.message) || 'Tidak dapat mengubah password.');
+          }
+        })
+        .catch(function(err) {
+          if (btn) btn.disabled = false;
+          showProcessModal('error', 'Kesalahan Server', err.message || 'Gagal menghubungi server.');
+        });
+    };
+
+    window.confirmDeleteUser = function(userId, username) {
+      if (confirm('Apakah Anda yakin ingin menghapus akun "' + username + '"?')) {
+        showProcessModal('loading', 'Menghapus Akun Pengguna', 'Sedang menonaktifkan akun "' + username + '" dari sistem...');
+        callGasApi('deleteUser', { targetUserId: userId })
+          .then(function(res) {
+            if (res && res.success) {
+              showProcessModal('success', 'Akun Berhasil Dihapus', res.message, function() {
+                loadUsersTable();
+              });
+            } else {
+              showProcessModal('error', 'Gagal Menghapus Akun', (res && res.message) || 'Tidak dapat menghapus akun.');
+            }
+          })
+          .catch(function(err) {
+            showProcessModal('error', 'Kesalahan Server', err.message || 'Gagal menghubungi server.');
+          });
+      }
+    };
+
+    /* ==================== VIEWER & PROCESS MODAL ==================== */
+    window.openImageViewer = function(src, caption) {
+      var cleanSrc = safeUrl(src);
+      if (!cleanSrc) return;
+      document.getElementById('image-viewer-src').src = cleanSrc;
+      document.getElementById('image-viewer-caption').innerText = caption;
+      document.getElementById('modal-image-viewer').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    };
+
+    window.closeImageViewer = function() {
+      document.getElementById('modal-image-viewer').classList.add('hidden');
+    };
+
+    var processModalCallback = null;
+
+    window.showProcessModal = function(state, title, message, onOkCallback) {
+      var modal = document.getElementById('modal-process');
+      var loadEl = document.getElementById('process-icon-loading');
+      var succEl = document.getElementById('process-icon-success');
+      var errEl = document.getElementById('process-icon-error');
+      var titleEl = document.getElementById('process-title');
+      var msgEl = document.getElementById('process-message');
+      var actionBar = document.getElementById('process-action-bar');
+      var okBtn = document.getElementById('btn-process-ok');
+
+      if (!modal) return;
+      processModalCallback = typeof onOkCallback === 'function' ? onOkCallback : null;
+
+      loadEl.classList.add('hidden');
+      succEl.classList.add('hidden');
+      errEl.classList.add('hidden');
+      actionBar.classList.add('hidden');
+
+      titleEl.innerText = title || 'Memproses...';
+      msgEl.innerText = message || '';
+
+      if (state === 'loading') {
+        loadEl.classList.remove('hidden');
+        titleEl.className = 'text-base font-extrabold text-cyan-300';
+      } else if (state === 'success') {
+        succEl.classList.remove('hidden');
+        actionBar.classList.remove('hidden');
+        titleEl.className = 'text-base font-extrabold text-emerald-400';
+        okBtn.className = 'w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl shadow-lg transition';
+        okBtn.innerText = 'OK / Lanjutkan';
+      } else {
+        errEl.classList.remove('hidden');
+        actionBar.classList.remove('hidden');
+        titleEl.className = 'text-base font-extrabold text-rose-400';
+        okBtn.className = 'w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-lg transition';
+        okBtn.innerText = 'Tutup';
+      }
+
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    };
+
+    window.closeProcessModal = function() {
+      var modal = document.getElementById('modal-process');
+      if (modal) modal.classList.add('hidden');
+      if (typeof processModalCallback === 'function') {
+        var cb = processModalCallback;
+        processModalCallback = null;
+        cb();
+      }
+    };
+
+    window.showToast = function(message, type) {
+      var toast = document.getElementById('toast');
+      var toastMsg = document.getElementById('toast-message');
+      var toastIcon = document.getElementById('toast-icon');
+
+      if (!toast || !toastMsg || !toastIcon) return;
+
+      toastMsg.innerText = message;
+      if (type === 'success') {
+        toastIcon.setAttribute('data-lucide', 'check-circle');
+        toastIcon.className = 'w-5 h-5 text-emerald-400 shrink-0';
+      } else if (type === 'error') {
+        toastIcon.setAttribute('data-lucide', 'alert-octagon');
+        toastIcon.className = 'w-5 h-5 text-rose-400 shrink-0';
+      } else {
+        toastIcon.setAttribute('data-lucide', 'info');
+        toastIcon.className = 'w-5 h-5 text-cyan-400 shrink-0';
+      }
+      if (window.lucide) lucide.createIcons();
+
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      setTimeout(function() {
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 3500);
+    };
+
+    window.onload = function() {
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+      restoreSessionFromStorage();
+    };
+  </script>
+</body>
+</html>
