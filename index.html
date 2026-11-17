@@ -439,7 +439,7 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
               <!-- Basemap Switcher & Region Selector Above Map -->
               <div class="flex items-center flex-wrap gap-1.5">
                 <select id="filter-wilayah" onchange="handleWilayahFilterChange()" class="bg-obsidian-950 border border-cyan-500/40 rounded-lg px-2.5 py-1 text-[11px] font-bold text-cyan-300 focus:outline-none">
-                  <option value="ALL">Semua Wilayah (7)</option>
+                  <option value="ALL">Semua Wilayah</option>
                   <option value="Jakarta">Jakarta HQ</option>
                   <option value="PGE">PGE</option>
                   <option value="Tonga">Tonga</option>
@@ -2348,7 +2348,7 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
       if (filterWilayahEl) {
         if (isSuperAdmin) {
           filterWilayahEl.innerHTML =
-            '<option value="ALL">Semua Wilayah (7)</option>' +
+            '<option value="ALL">Semua Wilayah</option>' +
             '<option value="Jakarta">Jakarta HQ</option>' +
             '<option value="PGE">PGE</option>' +
             '<option value="Tonga">Tonga</option>' +
