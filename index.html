@@ -2526,6 +2526,15 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
         .then(function(res) {
           if (!silentLoading) closeProcessModal();
           if (res && res.success) {
+            if (Array.isArray(res.wilayahList)) {
+              res.wilayahList.forEach(function(w) {
+                DEFAULT_WILAYAH_MAP[w.code] = w;
+              });
+              if (currentSessionToken && currentUser) {
+                saveSessionToStorage(currentSessionToken, currentUser, DEFAULT_WILAYAH_MAP);
+              }
+              resetToActiveWilayahCenter();
+            }
             assessments = Array.isArray(res.data) ? res.data : [];
             updateMonthlyReviewNotification();
             renderMapLayers();
