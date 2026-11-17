@@ -423,7 +423,7 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
         <div class="lg:col-span-7 flex flex-col gap-3.5 min-h-[520px] lg:min-h-0 overflow-hidden">
 
           <!-- Card 1: Live Threat & Command Map -->
-          <section class="flex-1 bg-obsidian-900 border border-obsidian-800 rounded-2xl flex flex-col overflow-hidden shadow-xl min-h-[360px]">
+          <section id="map-section-card" class="flex-1 bg-obsidian-900 border border-obsidian-800 rounded-2xl flex flex-col overflow-hidden shadow-xl min-h-[360px] transition-all duration-300">
             <!-- Map Header Bar -->
             <div class="px-4 py-2.5 bg-obsidian-900 border-b border-obsidian-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
               <div class="flex items-center space-x-3">
@@ -457,6 +457,11 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
 
                 <button type="button" onclick="resetToActiveWilayahCenter()" title="Reset Posisi Peta" class="p-1.5 rounded-lg bg-obsidian-950 border border-obsidian-700 text-slate-300 hover:text-cyan-300 transition">
                   <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+                </button>
+
+                <button type="button" id="btn-map-fullscreen" onclick="toggleMapFullscreen()" title="Perbesar Peta (Fullscreen)" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold flex items-center space-x-1 transition">
+                  <i id="icon-map-fullscreen" data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                  <span id="label-map-fullscreen" class="hidden sm:inline">Fullscreen</span>
                 </button>
               </div>
             </div>
@@ -624,6 +629,9 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
       </div>
     </div>
   </div>
+
+  <!-- ==================== 3B. BACKDROP BLUR UNTUK FULLSCREEN MAP ==================== -->
+  <div id="map-fullscreen-backdrop" onclick="toggleMapFullscreen(false)" class="hidden fixed inset-0 z-[8490] bg-obsidian-950/75 backdrop-blur-md transition-opacity duration-300"></div>
 
   <!-- ==================== 4. DRAWER: INPUT / EDIT ASESMEN ==================== -->
   <div id="assessment-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[520px] bg-obsidian-900 border-l border-obsidian-700 shadow-2xl z-[9999] transform translate-x-full transition-transform duration-300 flex flex-col">
@@ -2437,6 +2445,66 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
         activeBtn.className = 'px-2 py-1 rounded-md text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition';
       }
     };
+
+    var isMapFullscreen = false;
+
+    window.toggleMapFullscreen = function(forceState) {
+      var card = document.getElementById('map-section-card');
+      var backdrop = document.getElementById('map-fullscreen-backdrop');
+      var btn = document.getElementById('btn-map-fullscreen');
+      var icon = document.getElementById('icon-map-fullscreen');
+      var label = document.getElementById('label-map-fullscreen');
+      if (!card || !backdrop) return;
+
+      isMapFullscreen = (typeof forceState === 'boolean') ? forceState : !isMapFullscreen;
+
+      if (isMapFullscreen) {
+        backdrop.classList.remove('hidden');
+        card.className = 'fixed inset-3 sm:inset-6 z-[8500] bg-obsidian-900 border border-cyan-500/50 rounded-2xl flex flex-col overflow-hidden shadow-2xl shadow-cyan-950/60 transition-all duration-300';
+        if (btn) {
+          btn.className = 'px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/35 border border-rose-500/50 text-rose-300 text-[10px] font-bold flex items-center space-x-1 transition';
+          btn.title = 'Keluar dari Fullscreen (ESC)';
+        }
+        if (icon) icon.setAttribute('data-lucide', 'minimize-2');
+        if (label) label.innerText = 'Tutup Fullscreen';
+      } else {
+        backdrop.classList.add('hidden');
+        card.className = 'flex-1 bg-obsidian-900 border border-obsidian-800 rounded-2xl flex flex-col overflow-hidden shadow-xl min-h-[360px] transition-all duration-300';
+        if (btn) {
+          btn.className = 'px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold flex items-center space-x-1 transition';
+          btn.title = 'Perbesar Peta (Fullscreen)';
+        }
+        if (icon) icon.setAttribute('data-lucide', 'maximize-2');
+        if (label) label.innerText = 'Fullscreen';
+      }
+
+      if (window.lucide) lucide.createIcons();
+
+      if (map) {
+        setTimeout(function() {
+          map.invalidateSize({ animate: true });
+          renderMapLayers();
+        }, 120);
+      }
+    };
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && isMapFullscreen) {
+        var drawer = document.getElementById('assessment-drawer');
+        var histModal = document.getElementById('modal-lifecycle-history');
+        var imgModal = document.getElementById('modal-image-viewer');
+        var confirmModal = document.getElementById('modal-monthly-confirm');
+        var hasOpenOverlay =
+          (drawer && !drawer.classList.contains('translate-x-full')) ||
+          (histModal && !histModal.classList.contains('hidden')) ||
+          (imgModal && !imgModal.classList.contains('hidden')) ||
+          (confirmModal && !confirmModal.classList.contains('hidden'));
+
+        if (!hasOpenOverlay) {
+          toggleMapFullscreen(false);
+        }
+      }
+    });
 
     window.resetToActiveWilayahCenter = function() {
       if (map) {
