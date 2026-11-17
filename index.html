@@ -2508,11 +2508,19 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
 
     window.resetToActiveWilayahCenter = function() {
       if (map) {
+        if (tempClickMarker) {
+          map.removeLayer(tempClickMarker);
+          tempClickMarker = null;
+        }
         var center = getActiveCenter();
         map.invalidateSize();
         map.setView([center.lat, center.lng], center.zoom, { animate: true });
         var lbl = document.getElementById('footer-map-label');
         if (lbl) lbl.innerText = 'Pusat: ' + center.name;
+        var coordEl = document.getElementById('live-cursor-coords');
+        if (coordEl && !isNaN(center.lat) && !isNaN(center.lng)) {
+          coordEl.innerText = Number(center.lat).toFixed(6) + ', ' + Number(center.lng).toFixed(6);
+        }
       }
     };
 
