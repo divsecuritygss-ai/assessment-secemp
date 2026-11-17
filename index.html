@@ -86,17 +86,24 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
       color: #ffffff !important;
     }
 
-    @keyframes neon-dash {
-      to { stroke-dashoffset: -36; }
-    }
     .neon-arc-line {
-      stroke-dasharray: 8 6;
-      animation: neon-dash 1.4s linear infinite;
-      filter: drop-shadow(0 0 6px currentColor);
+      filter: drop-shadow(0 0 3px currentColor);
     }
     .neon-arc-glow {
-      filter: blur(3px);
-      opacity: 0.45;
+      filter: blur(2px);
+      opacity: 0.2;
+    }
+    .laser-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background: #ffffff;
+      border: 1.5px solid var(--laser-color, #38bdf8);
+      box-shadow:
+        0 0 6px 2px #ffffff,
+        0 0 12px 4px var(--laser-color, #38bdf8),
+        0 0 20px 6px var(--laser-color, #38bdf8);
+      pointer-events: none;
     }
 
     @keyframes pulse-ring {
@@ -941,6 +948,7 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
     var tempClickMarker = null;
     var currentTileType = 'dark';
     var markerRegistry = {};
+    var laserAnimFrameId = null;
 
     /**
      * API Client Universal ke Google Apps Script Web App
@@ -1196,7 +1204,61 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
       return points;
     }
 
+    function startSequentialLaserAnimation(laserRoutes) {
+      if (laserAnimFrameId) {
+        cancelAnimationFrame(laserAnimFrameId);
+        laserAnimFrameId = null;
+      }
+      if (!laserRoutes || laserRoutes.length === 0) return;
+
+      var travelMs = 1150; // Durasi perjalanan titik laser dari Jakarta ke satu wilayah
+      var pauseMs = 160;   // Jeda singkat sebelum giliran wilayah berikutnya
+      var slotMs = travelMs + pauseMs;
+      var totalCycleMs = slotMs * laserRoutes.length;
+      var startTime = performance.now();
+
+      function step(now) {
+        if (!map || !networkLayer || laserRoutes.length === 0) return;
+
+        var elapsed = (now - startTime) % totalCycleMs;
+        var activeIdx = Math.floor(elapsed / slotMs);
+        var slotElapsed = elapsed - (activeIdx * slotMs);
+        var progress = Math.min(1, slotElapsed / travelMs);
+        // Easing halus agar titik laser meluncur natural
+        var eased = progress < 0.5
+          ? 2 * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+        for (var i = 0; i < laserRoutes.length; i++) {
+          var route = laserRoutes[i];
+          var el = route.marker.getElement();
+          if (i === activeIdx && slotElapsed <= travelMs) {
+            var pts = route.points;
+            var exactIdx = eased * (pts.length - 1);
+            var idx0 = Math.floor(exactIdx);
+            var idx1 = Math.min(pts.length - 1, idx0 + 1);
+            var frac = exactIdx - idx0;
+            var lat = pts[idx0][0] + (pts[idx1][0] - pts[idx0][0]) * frac;
+            var lng = pts[idx0][1] + (pts[idx1][1] - pts[idx0][1]) * frac;
+
+            route.marker.setLatLng([lat, lng]);
+            if (el) el.style.opacity = '1';
+          } else {
+            if (el) el.style.opacity = '0';
+          }
+        }
+
+        laserAnimFrameId = requestAnimationFrame(step);
+      }
+
+      laserAnimFrameId = requestAnimationFrame(step);
+    }
+
     function renderJakartaCommandNetwork(dataset) {
+      if (laserAnimFrameId) {
+        cancelAnimationFrame(laserAnimFrameId);
+        laserAnimFrameId = null;
+      }
       networkLayer.clearLayers();
       var isSuperAdmin = currentUser && currentUser.role === 'SUPER ADMIN';
 
@@ -1233,6 +1295,8 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
         Kampar: 0.20
       };
 
+      var laserRoutes = [];
+
       targetCodes.forEach(function(code) {
         var target = DEFAULT_WILAYAH_MAP[code];
         if (!target) return;
@@ -1241,21 +1305,41 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
         var neonColor = st.kritis > 0 ? '#f43f5e' : (st.moderat > 0 ? '#f59e0b' : '#38bdf8');
         var arcPoints = buildCurvedArcPoints([jkt.lat, jkt.lng], [target.lat, target.lng], curveOffsets[code] || 0.15);
 
+        // Pendar tipis di bawah garis solid
         L.polyline(arcPoints, {
           color: neonColor,
-          weight: 6,
-          opacity: 0.28,
+          weight: 2.8,
+          opacity: 0.16,
           className: 'neon-arc-glow',
           interactive: false
         }).addTo(networkLayer);
 
+        // Garis penghubung solid tipis
         L.polyline(arcPoints, {
           color: neonColor,
-          weight: 2.4,
-          opacity: 0.95,
+          weight: 1.2,
+          opacity: 0.65,
           className: 'neon-arc-line',
           interactive: false
         }).addTo(networkLayer);
+
+        // Marker titik laser untuk jalur wilayah ini
+        var laserMarker = L.marker([jkt.lat, jkt.lng], {
+          interactive: false,
+          zIndexOffset: 1200,
+          icon: L.divIcon({
+            className: 'laser-marker-wrap',
+            html: '<div class="laser-pulse-dot" style="--laser-color:' + neonColor + ';"></div>',
+            iconSize: [8, 8],
+            iconAnchor: [4, 4]
+          })
+        }).addTo(networkLayer);
+
+        laserRoutes.push({
+          code: code,
+          points: arcPoints,
+          marker: laserMarker
+        });
 
         if (map && map.getZoom() <= 10) {
           var badgeBorder = st.kritis > 0 ? 'border-rose-400 shadow-rose-500/40' : (st.moderat > 0 ? 'border-amber-400 shadow-amber-500/40' : 'border-cyan-400 shadow-cyan-500/40');
@@ -1312,6 +1396,7 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
       });
 
       networkLayer.addLayer(hqMarker);
+      startSequentialLaserAnimation(laserRoutes);
     }
 
     function renderRegionalAssessmentSpokes(dataset) {
@@ -1364,18 +1449,20 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
           var bend = ((idx % 2 === 0) ? 1 : -1) * (0.12 + (idx % 3) * 0.04);
           var arcPoints = buildCurvedArcPoints([regionHub.lat, regionHub.lng], [lat, lng], bend);
 
+          // Efek cahaya neon tipis
           L.polyline(arcPoints, {
             color: spokeColor,
-            weight: 5,
-            opacity: 0.25,
+            weight: 2.6,
+            opacity: 0.16,
             className: 'neon-arc-glow',
             interactive: false
           }).addTo(networkLayer);
 
+          // Garis vektor solid tipis dari Pusat Wilayah ke titik asesmen
           L.polyline(arcPoints, {
             color: spokeColor,
-            weight: 2,
-            opacity: 0.9,
+            weight: 1.2,
+            opacity: 0.72,
             className: 'neon-arc-line',
             interactive: false
           }).addTo(networkLayer);
