@@ -192,7 +192,50 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
         </button>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-14 w-full text-left">
+      <!-- Live Notification Board (Perlu Update & Input Terbaru Minggu Ini) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-10 w-full text-left">
+        <!-- Kolom 1: Perlu Update (Siklus 30+ Hari) - Clickable ke Login Wilayah -->
+        <div class="p-5 rounded-2xl bg-obsidian-900/95 border border-amber-500/35 shadow-xl flex flex-col">
+          <div class="flex items-center justify-between gap-2 pb-3 border-b border-obsidian-800">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
+                <i data-lucide="bell-ring" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-xs sm:text-sm text-white">Notifikasi Perlu Update (30+ Hari)</h3>
+                <p class="text-[11px] text-slate-400">Klik item untuk langsung login ke wilayah terkait</p>
+              </div>
+            </div>
+            <span id="lp-overdue-count" class="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono text-[11px] font-bold">0</span>
+          </div>
+
+          <div id="lp-overdue-list" class="mt-3 space-y-2 max-h-56 overflow-y-auto custom-scrollbar pr-1">
+            <div class="p-4 text-center text-xs text-slate-500">Memuat status tinjauan wilayah...</div>
+          </div>
+        </div>
+
+        <!-- Kolom 2: Input / Pembaruan Terbaru Minggu Ini (<= 7 Hari) -->
+        <div class="p-5 rounded-2xl bg-obsidian-900/95 border border-cyan-500/35 shadow-xl flex flex-col">
+          <div class="flex items-center justify-between gap-2 pb-3 border-b border-obsidian-800">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-xs sm:text-sm text-white">Asesmen Terbaru Minggu Ini</h3>
+                <p class="text-[11px] text-slate-400">Input baru & pembaruan kondisi 7 hari terakhir</p>
+              </div>
+            </div>
+            <span id="lp-recent-count" class="px-2.5 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-mono text-[11px] font-bold">0</span>
+          </div>
+
+          <div id="lp-recent-list" class="mt-3 space-y-2 max-h-56 overflow-y-auto custom-scrollbar pr-1">
+            <div class="p-4 text-center text-xs text-slate-500">Memuat aktivitas minggu ini...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-8 w-full text-left">
         <div class="p-6 rounded-2xl bg-obsidian-900/90 border border-obsidian-800 hover:border-cyan-500/40 transition">
           <div class="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center mb-4">
             <i data-lucide="network" class="w-5 h-5"></i>
@@ -237,6 +280,10 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
         </div>
         <h3 class="text-lg font-bold text-white">Autentikasi Security EMP</h3>
         <p class="text-xs text-slate-400 mt-1">Masuk sesuai akun Wilayah Kerja atau Super Admin</p>
+        <div id="login-region-banner" class="hidden mt-2.5 inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 font-mono text-[11px] font-bold">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+          <span id="login-region-banner-text">Target Wilayah</span>
+        </div>
       </div>
 
       <form onsubmit="handleLoginSubmit(event)" class="space-y-4" autocomplete="off">
@@ -1015,9 +1062,20 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
 
     var REGION_CODES = ['PGE', 'Tonga', 'ITA', 'Bentu', 'Siak', 'Kampar', 'Jakarta'];
 
+    var REGION_DEFAULT_USERNAMES = {
+      PGE: 'admin_pge',
+      Tonga: 'admin_tonga',
+      ITA: 'admin_ita',
+      Bentu: 'admin_bentu',
+      Siak: 'admin_siak',
+      Kampar: 'admin_kampar',
+      Jakarta: 'admin_jakarta'
+    };
+
     var currentUser = null;
     var currentSessionToken = null;
     var activeWilayahScope = 'ALL';
+    var pendingFocusAssessmentId = null;
     var assessments = [];
     var photoCache = {};
     var map = null;
@@ -2103,15 +2161,117 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
       }
     };
 
-    window.openLoginModal = function() {
+    window.openLoginModal = function(presetWilayah, targetAssessmentId) {
       var modal = document.getElementById('modal-login');
+      var userInput = document.getElementById('login-username');
+      var passInput = document.getElementById('login-password');
+      var banner = document.getElementById('login-region-banner');
+      var bannerText = document.getElementById('login-region-banner-text');
+
+      pendingFocusAssessmentId = targetAssessmentId || null;
+
+      if (presetWilayah && REGION_DEFAULT_USERNAMES[presetWilayah]) {
+        if (userInput) userInput.value = REGION_DEFAULT_USERNAMES[presetWilayah];
+        if (banner && bannerText) {
+          bannerText.innerText = 'Login Wilayah ' + presetWilayah + (targetAssessmentId ? ' · ' + targetAssessmentId : '');
+          banner.classList.remove('hidden');
+        }
+      } else {
+        if (banner) banner.classList.add('hidden');
+      }
+
       if (modal) modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+      setTimeout(function() {
+        if (presetWilayah && passInput) {
+          passInput.focus();
+        } else if (userInput) {
+          userInput.focus();
+        }
+      }, 80);
     };
 
     window.closeLoginModal = function() {
       var modal = document.getElementById('modal-login');
       if (modal) modal.classList.add('hidden');
     };
+
+    function loadLandingNotifications() {
+      var overdueListEl = document.getElementById('lp-overdue-list');
+      var recentListEl = document.getElementById('lp-recent-list');
+      var overdueCountEl = document.getElementById('lp-overdue-count');
+      var recentCountEl = document.getElementById('lp-recent-count');
+
+      if (!overdueListEl || !recentListEl) return;
+
+      callGasApi('getLandingNotifications', {})
+        .then(function(res) {
+          if (!res || !res.success || !res.data) return;
+          var overdue = Array.isArray(res.data.overdue) ? res.data.overdue : [];
+          var recent = Array.isArray(res.data.recent) ? res.data.recent : [];
+
+          if (overdueCountEl) overdueCountEl.innerText = overdue.length;
+          if (recentCountEl) recentCountEl.innerText = recent.length;
+
+          if (overdue.length === 0) {
+            overdueListEl.innerHTML = '<div class="p-4 rounded-xl bg-obsidian-950/60 border border-obsidian-800 text-xs text-emerald-400 text-center">Seluruh titik sudah terverifikasi dalam 30 hari terakhir.</div>';
+          } else {
+            overdueListEl.innerHTML = overdue.map(function(item) {
+              var id = escapeHtml(item.id);
+              var wil = escapeHtml(item.wilayahKerja);
+              var area = escapeHtml(item.areaName);
+              var days = parseInt(item.daysSinceUpdate, 10) || 30;
+              var riskCls = item.riskLevel === 'Kritis'
+                ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                : (item.riskLevel === 'Moderat' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40');
+
+              return '<button type="button" data-wil="' + wil + '" data-id="' + id + '" onclick="openLoginModal(this.getAttribute(\'data-wil\'), this.getAttribute(\'data-id\'))" class="w-full text-left p-3 rounded-xl bg-obsidian-950/90 hover:bg-obsidian-800 border border-amber-500/30 hover:border-amber-400 transition flex items-center justify-between gap-2 group">' +
+                '<div class="min-w-0">' +
+                  '<div class="flex items-center space-x-1.5">' +
+                    '<span class="text-[10px] font-mono font-bold text-amber-300">' + id + '</span>' +
+                    '<span class="text-[9px] px-1.5 py-0.2 rounded bg-obsidian-900 border border-obsidian-700 font-mono text-cyan-300">' + wil + '</span>' +
+                    '<span class="text-[9px] px-1.5 py-0.2 rounded border font-bold ' + riskCls + '">' + escapeHtml(item.riskLevel) + '</span>' +
+                  '</div>' +
+                  '<div class="text-xs font-semibold text-white group-hover:text-amber-200 truncate mt-1">' + area + '</div>' +
+                '</div>' +
+                '<div class="shrink-0 text-right">' +
+                  '<span class="block text-[10px] font-mono font-bold text-amber-400">' + days + ' hari</span>' +
+                  '<span class="text-[10px] text-cyan-400 group-hover:underline font-semibold">Login & Update →</span>' +
+                '</div>' +
+              '</button>';
+            }).join('');
+          }
+
+          if (recent.length === 0) {
+            recentListEl.innerHTML = '<div class="p-4 rounded-xl bg-obsidian-950/60 border border-obsidian-800 text-xs text-slate-400 text-center">Belum ada input atau pembaruan baru dalam 7 hari terakhir.</div>';
+          } else {
+            recentListEl.innerHTML = recent.map(function(item) {
+              var id = escapeHtml(item.id);
+              var wil = escapeHtml(item.wilayahKerja);
+              var area = escapeHtml(item.areaName);
+              var act = escapeHtml(item.activityLabel || 'Diperbarui');
+              var daysAgo = parseInt(item.daysAgo, 10) || 0;
+              var timeText = daysAgo === 0 ? 'Hari ini' : (daysAgo + ' hari lalu');
+
+              return '<button type="button" data-wil="' + wil + '" data-id="' + id + '" onclick="openLoginModal(this.getAttribute(\'data-wil\'), this.getAttribute(\'data-id\'))" class="w-full text-left p-3 rounded-xl bg-obsidian-950/90 hover:bg-obsidian-800 border border-obsidian-800 hover:border-cyan-500/40 transition flex items-center justify-between gap-2 group">' +
+                '<div class="min-w-0">' +
+                  '<div class="flex items-center space-x-1.5">' +
+                    '<span class="text-[10px] font-mono font-bold text-cyan-400">' + id + '</span>' +
+                    '<span class="text-[9px] px-1.5 py-0.2 rounded bg-obsidian-900 border border-obsidian-700 font-mono text-slate-300">' + wil + '</span>' +
+                    '<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">' + act + '</span>' +
+                  '</div>' +
+                  '<div class="text-xs font-semibold text-white group-hover:text-cyan-300 truncate mt-1">' + area + '</div>' +
+                '</div>' +
+                '<span class="shrink-0 text-[10px] font-mono text-slate-400">' + timeText + '</span>' +
+              '</button>';
+            }).join('');
+          }
+        })
+        .catch(function() {
+          overdueListEl.innerHTML = '<div class="p-4 text-center text-xs text-slate-500">Status notifikasi tersedia setelah terhubung ke server.</div>';
+          recentListEl.innerHTML = '<div class="p-4 text-center text-xs text-slate-500">Aktivitas minggu ini tersedia setelah terhubung ke server.</div>';
+        });
+    }
 
     window.togglePasswordVisibility = function() {
       var pass = document.getElementById('login-password');
@@ -2304,6 +2464,21 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
             renderSidebarList();
             renderRegionalTelemetryBars();
             updateMetrics();
+
+            if (pendingFocusAssessmentId) {
+              var targetId = pendingFocusAssessmentId;
+              pendingFocusAssessmentId = null;
+              for (var i = 0; i < assessments.length; i++) {
+                if (getProp(assessments[i], 'ID', 'id') === targetId) {
+                  var tLat = parseFloat(getProp(assessments[i], 'Latitude', 'lat'));
+                  var tLng = parseFloat(getProp(assessments[i], 'Longitude', 'lng'));
+                  setTimeout(function() {
+                    focusToMarker(targetId, tLat, tLng);
+                  }, 350);
+                  break;
+                }
+              }
+            }
           } else {
             showProcessModal('error', 'Gagal Memuat Data', (res && res.message) || 'Tidak dapat memuat data.');
             if (res && res.sessionExpired) handleLogout();
@@ -2899,6 +3074,11 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
         });
     };
 
+    window.closeLifecycleHistoryModal = function() {
+      var modal = document.getElementById('modal-lifecycle-history');
+      if (modal) modal.classList.add('hidden');
+    };
+
     window.openLifecycleHistoryModal = function(id, areaName) {
       var modal = document.getElementById('modal-lifecycle-history');
       var body = document.getElementById('history-timeline-body');
@@ -2981,6 +3161,7 @@ CONTEXT     : Pusat Komando Jakarta -> PGE, Tonga, ITA, Bentu, Siak, Kampar
       if (window.lucide) {
         lucide.createIcons();
       }
+      loadLandingNotifications();
       restoreSessionFromStorage();
     };
   </script>
